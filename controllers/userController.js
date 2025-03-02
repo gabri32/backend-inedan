@@ -30,10 +30,11 @@ async function getUsers(req, res) {
 
 async function login(req, res) {
   try {
-    const { correo, contraseña } = req.body;
 
-    // Buscar usuario por correo
-    const usuario = await User.findOne({ where: { correo } });
+    const { num_identificacion, contraseña } = req.body;
+
+    // Buscar usuario por num
+    const usuario = await User.findOne({ where: { num_identificacion } });
 
     // Verificar si el usuario existe
     if (!usuario) {
@@ -48,7 +49,7 @@ async function login(req, res) {
     }
   // ✅ Generar el token con JWT
   const token = jwt.sign(
-    { id: usuario.id, correo: usuario.correo }, // Datos del usuario
+    { id: usuario.id, num_identificacion: usuario.num_identificacion }, // Datos del usuario
     process.env.JWT_SECRET, // Clave secreta
     { expiresIn: process.env.JWT_EXPIRES_IN } // Tiempo de expiración
   );
