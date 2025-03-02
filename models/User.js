@@ -23,6 +23,11 @@ const User = sequelize.define('User', {
   rol_id: {
     type: DataTypes.INTEGER,
     allowNull: false
+  },
+  num_identificacion:{
+    type:DataTypes.INTEGER,
+    allowNull:false,
+    unique: true
   }
 }, {
   tableName: 'usuarios', 

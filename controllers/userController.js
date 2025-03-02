@@ -1,10 +1,10 @@
 const User = require('../models/User');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-require('dotenv').config(); // Cargar las variables de entorno
+require('dotenv').config(); 
 async function createUser(req, res) {
   try {
-    const { nombre, contraseña,correo,rol_id } = req.body;
+    const { nombre, contraseña,correo,rol_id,num_identificacion } = req.body;
 console.log({nombre})
     if (!nombre || !contraseña) {
       return res.status(400).json({ message: 'Username y password son requeridos' });
@@ -12,7 +12,7 @@ console.log({nombre})
 
     const hashedPassword = await bcrypt.hash(contraseña, 10);
 
-    const newUser = await User.create({ nombre,correo, contraseña: hashedPassword, rol_id });
+    const newUser = await User.create({ nombre,correo, contraseña: hashedPassword, rol_id,num_identificacion });
     res.status(201).json({ message: 'Usuario creado', user: newUser });
   } catch (error) {
     res.status(500).json({ message: 'Error al crear usuario', error });
