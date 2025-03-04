@@ -99,4 +99,32 @@ async function searchCandidate(req, res) {
     return res.status(500).json({ error: "Error en el servidor" });
   }
 }
-module.exports = { createVote, getVotes,searchStudent,searchStudent,createCandidate,searchCandidate,grafVotes };
+
+async function removeCandidate(req, res) {
+  try {
+    const { num_identificacion } = req.body;
+
+    // Validar que se envió el num_identificacion
+    if (!num_identificacion) {
+      return res.status(400).json({ error: "Número de identificación es obligatorio" });
+    }
+
+    // Intentar eliminar el candidato
+    const removedCandidate = await Candidate.destroy({
+      where: { num_identificacion }
+    });
+
+    // Verificar si se eliminó algún registro
+    if (removedCandidate === 0) {
+      return res.status(404).json({ error: "Candidato no encontrado" });
+    }
+
+    return res.status(200).json({ message: "Candidato eliminado correctamente" });
+
+  } catch (error) {
+    console.error("Error al eliminar candidato:", error);
+    return res.status(500).json({ error: "Error en el servidor" });
+  }
+}
+
+module.exports = { createVote, getVotes,searchStudent,searchStudent,createCandidate,searchCandidate,grafVotes,removeCandidate };
