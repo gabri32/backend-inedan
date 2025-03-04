@@ -1,4 +1,6 @@
 const User = require('../models/User');
+const typebelongings = require('../models/typebelongings');
+const belongings=require('../models/belongings');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 require('dotenv').config(); 
@@ -62,6 +64,41 @@ async function login(req, res) {
   }
 }
 
+async function gettypes(req,res) {
+  try{
+    const types = await typebelongings.findAll()
+    res.status(200).json({ message: 'exito', types:types});
+  }catch(error){
+    console.log(error)
+  }
+}
 
+async function createproperty(req, res) {
+  try {
+    // Extraer datos del cuerpo de la solicitud
+    const properties = req.body;
 
-module.exports = { createUser, getUsers,login };
+    // Validar que los campos obligatorios estén presentes
+    if (!Array.isArray(properties) || properties.length === 0) {
+      return res.status(400).json({ error: "Debe enviar una lista de bienes válida." });
+    }
+    for (const property of properties) {
+      if (!property.detalle || !property.costo || !property.tipo) {
+        return res.status(400).json({ error: "Cada bien debe incluir detalle, costo y tipo." });
+      }
+    }
+    // Crear la propiedad en la base de datos
+    const createdProperties = await belongings.bulkCreate(properties);
+
+    return res.status(201).json({
+      message: "Bienes creados con éxito",
+      properties: createdProperties
+    });
+
+  } catch (error) {
+    console.error("Error al crear propiedad:", error);
+    return res.status(500).json({ error: "Error en el servidor" });
+  }
+}
+
+module.exports = { createUser, getUsers,login,gettypes,createproperty };
