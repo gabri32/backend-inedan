@@ -1,5 +1,5 @@
 const express = require('express');
-const { createVote, getVotes ,searchStudent,createCandidate,searchCandidate,grafVotes,removeCandidate} = require('../controllers/voteController');
+const { createVote, getVotes ,searchStudent,createCandidate,searchCandidate,grafVotes,removeCandidate,saveImage} = require('../controllers/voteController');
 
 const router = express.Router();
 
@@ -10,4 +10,5 @@ router.post('/createCandidate',createCandidate)
 router.get('/searchCandidate',searchCandidate)
 router.get('/grafVotes',grafVotes)
 router.post('/removeCandidate',removeCandidate)
+router.post('/saveImage', saveImage)
 module.exports = router;

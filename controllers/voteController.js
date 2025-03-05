@@ -8,8 +8,11 @@ const pool = require('../db');
 //funcion que busca los estudiantes de grado 10 y 11
 async function searchStudent(req, res) {
   try {
-    const studentsList = await students.findAll({where:{grado:[10,11]}}); 
-    return res.status(200).json({ students: studentsList }); 
+    const studentsList = await students.findAll({
+      where: { grado: [10, 11] },
+      order: [["grado", "ASC"]], // Ordena en orden ascendente por grado
+    });
+    return res.status(200).json({ students: studentsList });
   } catch (error) {
     console.error("Error al buscar estudiantes:", error);
     return res.status(500).json({ error: "Error en el servidor" });
@@ -126,5 +129,27 @@ async function removeCandidate(req, res) {
     return res.status(500).json({ error: "Error en el servidor" });
   }
 }
-
-module.exports = { createVote, getVotes,searchStudent,searchStudent,createCandidate,searchCandidate,grafVotes,removeCandidate };
+async function saveImage(req,res) {
+    try {
+        const { num_identificacion, imageUrl,lema,numero } = req.body;
+      
+        // Buscar el usuario por num_identificacion
+        const candidate = await Candidate.findOne({ where: { num_identificacion } });
+        
+        if (!candidate) {
+            return res.status(404).json({ message: "Usuario no encontrado" });
+        }
+        
+        // Actualizar el campo imageUrl
+        candidate.foto = imageUrl;
+        candidate.lema=lema
+        candidate.numero=numero
+        await candidate.save();
+         
+        res.json({ message: "Imagen actualizada correctamente", candidate });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    
+};
+}
+module.exports = { createVote, getVotes,searchStudent,searchStudent,createCandidate,searchCandidate,grafVotes,removeCandidate,saveImage };

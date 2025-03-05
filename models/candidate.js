@@ -20,7 +20,18 @@ const Candidates = sequelize.define('Candidate', {
     allowNull: false,
     unique:true
   },
-
+  foto:{
+    type:DataTypes.STRING,
+    allowNull: true,
+  },
+lema:{
+  type:DataTypes.STRING,
+  allowNull: true,
+},
+numero:{
+  type:DataTypes.INTEGER,
+  allowNull:true
+  }
 }, {
   tableName: 'candidatos', 
   schema: 'votaciones', 

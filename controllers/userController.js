@@ -4,6 +4,9 @@ const belongings=require('../models/belongings');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 require('dotenv').config(); 
+
+
+
 async function createUser(req, res) {
   try {
     const { nombre, contraseña,correo,rol_id,num_identificacion } = req.body;

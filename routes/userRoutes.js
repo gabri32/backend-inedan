@@ -9,4 +9,5 @@ router.post('/login',login);
 router.post('/creationStudent',creationStudent)
 router.get('/gettypes',gettypes)
 router.post('/createproperty',createproperty)
+
 module.exports = router;
