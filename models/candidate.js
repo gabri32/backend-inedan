@@ -20,9 +20,8 @@ const Candidates = sequelize.define('Candidate', {
     allowNull: false,
     unique:true
   },
-  foto:{
-    type:DataTypes.STRING,
-    allowNull: true,
+  foto: {
+    type: DataTypes.BLOB("long") // Guardar imagen como BLOB largo
   },
 lema:{
   type:DataTypes.STRING,
@@ -32,6 +31,7 @@ numero:{
   type:DataTypes.INTEGER,
   allowNull:true
   }
+  ,
 }, {
   tableName: 'candidatos', 
   schema: 'votaciones', 

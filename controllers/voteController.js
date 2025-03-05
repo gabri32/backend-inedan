@@ -4,6 +4,7 @@ const Candidate = require('../models/candidate');
 const { Op,sequelize } = require('sequelize');
 const { QueryTypes } = require('sequelize'); 
 const pool = require('../db');
+const multer = require('multer');
 
 //funcion que busca los estudiantes de grado 10 y 11
 async function searchStudent(req, res) {
@@ -96,12 +97,21 @@ try {
 async function searchCandidate(req, res) {
   try {
     const candidatesList = await Candidate.findAll();
-    return res.status(200).json({ candidates: candidatesList });
+
+    const candidatesWithImages = candidatesList.map(candidate => {
+      return {
+        ...candidate.toJSON(),
+        foto: candidate.foto ? `data:image/jpeg;base64,${candidate.foto.toString('base64')}` : null
+      };
+    });
+
+    return res.status(200).json({ candidates: candidatesWithImages });
   } catch (error) {
     console.error("Error al buscar candidatos:", error);
     return res.status(500).json({ error: "Error en el servidor" });
   }
 }
+
 
 async function removeCandidate(req, res) {
   try {
@@ -129,27 +139,41 @@ async function removeCandidate(req, res) {
     return res.status(500).json({ error: "Error en el servidor" });
   }
 }
-async function saveImage(req,res) {
-    try {
-        const { num_identificacion, imageUrl,lema,numero } = req.body;
-      
-        // Buscar el usuario por num_identificacion
-        const candidate = await Candidate.findOne({ where: { num_identificacion } });
-        
-        if (!candidate) {
-            return res.status(404).json({ message: "Usuario no encontrado" });
-        }
-        
-        // Actualizar el campo imageUrl
-        candidate.foto = imageUrl;
-        candidate.lema=lema
-        candidate.numero=numero
-        await candidate.save();
-         
-        res.json({ message: "Imagen actualizada correctamente", candidate });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    
-};
+
+async function saveImage(req, res) {
+  try {
+      const { num_identificacion, lema, numero } = req.body;
+
+      // Buscar el candidato por num_identificacion
+      const candidate = await Candidate.findOne({ where: { num_identificacion } });
+
+      if (!candidate) {
+          return res.status(404).json({ message: "Usuario no encontrado" });
+      }
+
+      // Si se subió una imagen, guardar en la base de datos como BLOB
+      if (req.file) {
+          candidate.foto = req.file.buffer;
+      } else {
+          return res.status(400).json({ message: "No se subió ninguna imagen" });
+      }
+
+      // Actualizar otros campos
+      candidate.lema = lema;
+      candidate.numero = numero;
+      await candidate.save();
+
+      res.json({ 
+          message: "Imagen actualizada correctamente",
+          candidate: {
+              num_identificacion: candidate.num_identificacion,
+              lema: candidate.lema,
+              numero: candidate.numero
+          }
+      });
+  } catch (error) {
+      console.error("Error al guardar la imagen:", error);
+      res.status(500).json({ error: "Error interno del servidor" });
+  }
 }
-module.exports = { createVote, getVotes,searchStudent,searchStudent,createCandidate,searchCandidate,grafVotes,removeCandidate,saveImage };
+module.exports = { createVote, getVotes,searchStudent,createCandidate,searchCandidate,grafVotes,removeCandidate,saveImage };
