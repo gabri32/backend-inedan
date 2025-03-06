@@ -176,4 +176,6 @@ async function saveImage(req, res) {
       res.status(500).json({ error: "Error interno del servidor" });
   }
 }
+
+
 module.exports = { createVote, getVotes,searchStudent,createCandidate,searchCandidate,grafVotes,removeCandidate,saveImage };

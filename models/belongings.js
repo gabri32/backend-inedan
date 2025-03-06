@@ -18,6 +18,10 @@ const belongings = sequelize.define('belongings', {
 tipo:{
     type: DataTypes.INTEGER,
     allowNull:false,
+},
+amount:{
+  type:DataTypes.INTEGER,
+  allowNull:true
 }
 }, {
   tableName: 'bienes', 

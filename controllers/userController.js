@@ -104,4 +104,34 @@ async function createproperty(req, res) {
   }
 }
 
-module.exports = { createUser, getUsers,login,gettypes,createproperty };
+
+async function getPropertiesC(req, res) {
+  try {
+    const consum = await belongings.findAll({
+      where: {
+        tipo: 1
+      }
+    });
+    
+    res.json(consum); 
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error al obtener las propiedades" });
+  }
+}
+
+async function getPropertiesD(req,res) {
+  try {
+    const consum = await belongings.findAll({
+      where: {
+        tipo: 2
+      }
+    });
+    
+    res.json(consum); 
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Error al obtener las propiedades" });
+  }
+}
+module.exports = { createUser, getUsers,login,gettypes,createproperty,getPropertiesC,getPropertiesD };
