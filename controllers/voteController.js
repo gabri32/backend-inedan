@@ -25,19 +25,36 @@ async function searchStudent(req, res) {
 
 async function createVote(req, res) {
   try {
-    const { estudiante_id, candidato_id,id_tipo_vote } = req.body;
-console.log('datos de llegada', req.body)
-    if (!estudiante_id || !candidato_id) {
-      return res.status(400).json({ message: 'Candidato y votante son requeridos' });
+    const { estudiante_id, candidato_id, id_tipo_vote, es_blanco } = req.body;
+    console.log('📥 Datos recibidos:', req.body);
+
+    // Validar que los datos requeridos estén presentes
+    if (!estudiante_id || (!candidato_id && !es_blanco) || !id_tipo_vote) {
+      return res.status(400).json({ message: 'Datos incompletos para registrar el voto' });
     }
 
-    const newVote = await Vote.create({ estudiante_id, candidato_id,id_tipo_vote });
-    res.status(201).json({ message: 'Voto registrado', vote: newVote });
+    // Buscar el estudiante en la base de datos
+    const student = await students.findOne({ num_identificacion: estudiante_id });
+
+    if (!student) {
+      return res.status(404).json({ message: 'Estudiante no encontrado' });
+    }
+
+    // Si es un voto en blanco, registrarlo sin candidato
+    const newVote = await Vote.create({
+      estudiante_id: student.id,
+      candidato_id: es_blanco ? null : candidato_id,
+      id_tipo_vote,
+      es_blanco // Guardamos si el voto es en blanco
+    });
+
+    return res.status(201).json({ message: '✅ Voto registrado exitosamente', vote: newVote });
   } catch (error) {
     console.error('❌ Error al registrar voto:', error);
-    res.status(500).json({ message: 'Error al registrar voto', error });
+    return res.status(500).json({ message: 'Error interno al registrar voto', error: error.message });
   }
 }
+
 //funcion que obtiene los votos
 async function getVotes(req, res) {
   try {
@@ -61,11 +78,12 @@ async function grafVotes(req, res) {
           c.id AS candidato_id,
           c.nombre AS candidato,
           c.descripcion,
+           v.id_tipo_vote,
           COUNT(v.id) AS votos
       FROM votaciones.votos v
-      JOIN votaciones.candidatos c ON v.candidato_id = c.id
-      GROUP BY c.id, c.nombre, c.descripcion
-      ORDER BY votos DESC;
+    left  JOIN votaciones.candidatos c ON v.candidato_id = c.id
+      GROUP BY c.id, c.nombre, c.descripcion,v.id_tipo_vote
+      ORDER BY votos DESC;;
     `;
 
     const { rows } = await pool.query(query);

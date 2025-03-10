@@ -1,5 +1,5 @@
 const express = require('express');
-const { createUser, getUsers,login,gettypes,createproperty,getPropertiesC,getPropertiesD } = require('../controllers/userController');
+const { createUser, getUsers,login,gettypes,createproperty,getPropertiesC,getPropertiesD,updatePropierties,deletePropierties } = require('../controllers/userController');
 const{creationStudent}=require('../controllers/acadeController')
 const router = express.Router();
 
@@ -11,5 +11,6 @@ router.get('/gettypes',gettypes)
 router.post('/createproperty',createproperty)
 router.get('/getPropertiesC',getPropertiesC)
 router.get('/getPropertiesD',getPropertiesD)
-
+router.post('/updatePropierties',updatePropierties)
+router.post('/deletePropierties',deletePropierties)
 module.exports = router;

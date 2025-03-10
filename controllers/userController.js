@@ -1,23 +1,24 @@
 const User = require('../models/User');
 const typebelongings = require('../models/typebelongings');
-const belongings=require('../models/belongings');
+const belongings = require('../models/belongings');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-require('dotenv').config(); 
+const { where } = require('sequelize');
+require('dotenv').config();
 
 
 
 async function createUser(req, res) {
   try {
-    const { nombre, contraseña,correo,rol_id,num_identificacion } = req.body;
-console.log({nombre})
+    const { nombre, contraseña, correo, rol_id, num_identificacion } = req.body;
+    console.log({ nombre })
     if (!nombre || !contraseña) {
       return res.status(400).json({ message: 'Username y password son requeridos' });
     }
 
     const hashedPassword = await bcrypt.hash(contraseña, 10);
 
-    const newUser = await User.create({ nombre,correo, contraseña: hashedPassword, rol_id,num_identificacion });
+    const newUser = await User.create({ nombre, correo, contraseña: hashedPassword, rol_id, num_identificacion });
     res.status(201).json({ message: 'Usuario creado', user: newUser });
   } catch (error) {
     res.status(500).json({ message: 'Error al crear usuario', error });
@@ -52,14 +53,14 @@ async function login(req, res) {
     if (!isMatch) {
       return res.status(401).json({ message: 'Contraseña incorrecta' });
     }
-  // ✅ Generar el token con JWT
-  const token = jwt.sign(
-    { id: usuario.id, num_identificacion: usuario.num_identificacion }, // Datos del usuario
-    process.env.JWT_SECRET, // Clave secreta
-    { expiresIn: process.env.JWT_EXPIRES_IN } // Tiempo de expiración
-  );
+    // ✅ Generar el token con JWT
+    const token = jwt.sign(
+      { id: usuario.id, num_identificacion: usuario.num_identificacion }, // Datos del usuario
+      process.env.JWT_SECRET, // Clave secreta
+      { expiresIn: process.env.JWT_EXPIRES_IN } // Tiempo de expiración
+    );
     // Si todo está bien, devolver datos del usuario
-    res.status(200).json({ message: 'Login exitoso', user: usuario ,token:token});
+    res.status(200).json({ message: 'Login exitoso', user: usuario, token: token });
 
   } catch (error) {
     console.error('Error en login:', error);
@@ -67,11 +68,11 @@ async function login(req, res) {
   }
 }
 
-async function gettypes(req,res) {
-  try{
+async function gettypes(req, res) {
+  try {
     const types = await typebelongings.findAll()
-    res.status(200).json({ message: 'exito', types:types});
-  }catch(error){
+    res.status(200).json({ message: 'exito', types: types });
+  } catch (error) {
     console.log(error)
   }
 }
@@ -112,26 +113,66 @@ async function getPropertiesC(req, res) {
         tipo: 1
       }
     });
-    
-    res.json(consum); 
+
+    res.json(consum);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Error al obtener las propiedades" });
   }
 }
 
-async function getPropertiesD(req,res) {
+async function getPropertiesD(req, res) {
   try {
     const consum = await belongings.findAll({
       where: {
         tipo: 2
       }
     });
-    
-    res.json(consum); 
+
+    res.json(consum);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Error al obtener las propiedades" });
   }
 }
-module.exports = { createUser, getUsers,login,gettypes,createproperty,getPropertiesC,getPropertiesD };
+
+
+
+async function updatePropierties(req, res) {
+  try {
+    const { id_bien, costo, amount } = req.body;
+    const updated = await belongings.update(
+      {
+        costo: costo,
+        amount: amount
+      }, {
+      where: {
+        id_bien: id_bien
+      }
+    })
+    return res.status(201).json({
+      message: "Biene actualizado con éxito",
+
+    });
+  } catch (error) {
+    console.log(error)
+  }
+}
+async function deletePropierties(req, res) {
+  try {
+    const { id_bien} = req.body;
+    const destroyed = await belongings.destroy(
+     {
+      where: {
+        id_bien: id_bien
+      }
+    })
+    return res.status(201).json({
+      message: "Biene actualizado con éxito",
+
+    });
+  } catch (error) {
+    console.log(error)
+  }
+}
+module.exports = { createUser, getUsers, login, gettypes, createproperty, getPropertiesC, getPropertiesD, updatePropierties,deletePropierties };
