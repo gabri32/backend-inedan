@@ -42,7 +42,7 @@ async function createVote(req, res) {
 
     // Si es un voto en blanco, registrarlo sin candidato
     const newVote = await Vote.create({
-      estudiante_id: student.id,
+      estudiante_id: estudiante_id,
       candidato_id: es_blanco ? null : candidato_id,
       id_tipo_vote,
       es_blanco // Guardamos si el voto es en blanco
@@ -62,15 +62,18 @@ async function getVotes(req, res) {
       include: [
         { model: students, as: 'estudiante' },
         { model: Candidate, as: 'candidato' }
-      ]
+      ],
+      logging: console.log // Esto mostrará la consulta SQL en la consola
     });
 
+    console.log(votes);
     res.status(200).json(votes);
   } catch (error) {
     console.error('❌ Error al obtener votos:', error);
     res.status(500).json({ message: 'Error al obtener votos', error: error.message });
   }
 }
+
 async function grafVotes(req, res) {
   try {
     const query = `

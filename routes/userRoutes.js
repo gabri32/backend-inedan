@@ -1,5 +1,5 @@
 const express = require('express');
-const { createUser, getUsers,login,gettypes,createproperty,getPropertiesC,getPropertiesD,updatePropierties,deletePropierties } = require('../controllers/userController');
+const { createUser, getUsers,login,gettypes,createproperty,getPropertiesC,getPropertiesD,updatePropierties,deletePropierties,bulkCreateUser } = require('../controllers/userController');
 const{creationStudent}=require('../controllers/acadeController')
 const router = express.Router();
 
@@ -13,4 +13,6 @@ router.get('/getPropertiesC',getPropertiesC)
 router.get('/getPropertiesD',getPropertiesD)
 router.post('/updatePropierties',updatePropierties)
 router.post('/deletePropierties',deletePropierties)
+router.get('/bulkCreateUser',bulkCreateUser)
+
 module.exports = router;

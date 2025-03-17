@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const typebelongings = require('../models/typebelongings');
 const belongings = require('../models/belongings');
+const students = require('../models/students');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { where } = require('sequelize');
@@ -22,6 +23,32 @@ async function createUser(req, res) {
     res.status(201).json({ message: 'Usuario creado', user: newUser });
   } catch (error) {
     res.status(500).json({ message: 'Error al crear usuario', error });
+  }
+}
+
+async function bulkCreateUser(req, res) {
+  try {
+    const datos = req.body;
+
+    // Obtener la lista de estudiantes
+    const studentsList = await students.findAll();
+   
+    const studentsData = studentsList.map(student => student.dataValues); 
+
+    const usuariosConHash = await Promise.all(
+      studentsData.map(async (student) => ({
+        nombre: student.nombre,
+        num_identificacion: student.num_identificacion,
+        rol_id: 2, // Asignar rol_id = 2
+        contraseña: await bcrypt.hash(student.num_identificacion.toString(), 10), 
+      }))
+    );
+    // Crear usuarios en bloque
+    const newUsers = await User.bulkCreate(usuariosConHash);
+
+    res.status(201).json({ message: 'Usuarios creados', users: newUsers });
+  } catch (error) {
+    res.status(500).json({ message: 'Error al crear usuarios', error: error.message });
   }
 }
 
@@ -175,4 +202,4 @@ async function deletePropierties(req, res) {
     console.log(error)
   }
 }
-module.exports = { createUser, getUsers, login, gettypes, createproperty, getPropertiesC, getPropertiesD, updatePropierties,deletePropierties };
+module.exports = { createUser, getUsers, login, gettypes, createproperty, getPropertiesC, getPropertiesD, updatePropierties,deletePropierties,bulkCreateUser };
