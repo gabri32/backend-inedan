@@ -26,7 +26,7 @@ async function searchStudent(req, res) {
 async function createVote(req, res) {
   try {
     const { estudiante_id, candidato_id, id_tipo_vote, es_blanco } = req.body;
-    console.log('📥 Datos recibidos:', req.body);
+    // console.log('📥 Datos recibidos:', req.body);
 
     // Validar que los datos requeridos estén presentes
     if (!estudiante_id || (!candidato_id && !es_blanco) || !id_tipo_vote) {
@@ -63,10 +63,8 @@ async function getVotes(req, res) {
         { model: students, as: 'estudiante' },
         { model: Candidate, as: 'candidato' }
       ],
-      logging: console.log // Esto mostrará la consulta SQL en la consola
+      // logging: console.log // Esto mostrará la consulta SQL en la consola
     });
-
-    console.log(votes);
     res.status(200).json(votes);
   } catch (error) {
     console.error('❌ Error al obtener votos:', error);
@@ -101,7 +99,7 @@ async function grafVotes(req, res) {
 async function createCandidate(req, res) {
 try {
   const params = req.body;
-  console.log({params})
+  // console.log({params})
   if (params.lenght === 0) {
     return res.status(400).json({ message: 'Datos requeridos' });
   }
@@ -110,7 +108,7 @@ try {
 
 } catch (error) {
   res.status(500).json({ message: 'Error al registrar candidato', error });
-  console.log('error', error)
+  console.error('error', error)
 }};
 
 
@@ -198,5 +196,22 @@ async function saveImage(req, res) {
   }
 }
 
+async function saerchidstudent (req,res){
+try {
 
-module.exports = { createVote, getVotes,searchStudent,createCandidate,searchCandidate,grafVotes,removeCandidate,saveImage };
+const {num_identificacion}=req.body;
+const exist =await students.findOne({where:{num_identificacion}})
+res.json({ 
+  student: {
+      num_identificacion: exist.num_identificacion,
+      id: exist.id
+  }
+});
+}catch(error)
+{
+  console.error("Error :", error);
+  res.status(500).json({ error: "Error interno del servidor" });
+}
+}
+
+module.exports = { createVote, getVotes,searchStudent,createCandidate,searchCandidate,grafVotes,removeCandidate,saveImage,saerchidstudent };

@@ -15,7 +15,7 @@ const Voto = sequelize.define('Voto', {
     allowNull: false,
     references: {
       model: Estudiante,
-      key: 'num_identificacion'
+      key: 'id'
     }
   },
   candidato_id: {

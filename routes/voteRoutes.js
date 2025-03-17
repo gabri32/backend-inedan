@@ -1,5 +1,5 @@
 const express = require('express');
-const { createVote, getVotes ,searchStudent,createCandidate,searchCandidate,grafVotes,removeCandidate,saveImage} = require('../controllers/voteController');
+const { createVote, getVotes ,searchStudent,createCandidate,searchCandidate,grafVotes,removeCandidate,saveImage,saerchidstudent} = require('../controllers/voteController');
 const multer = require("multer");
 
 // Configurar multer para almacenar la imagen en memoria (BLOB)
@@ -16,4 +16,5 @@ router.get('/searchCandidate',searchCandidate)
 router.get('/grafVotes',grafVotes)
 router.post('/removeCandidate',removeCandidate)
 router.post("/saveImage", upload.single("image"), saveImage);
+router.post("/saerchidstudent",saerchidstudent)
 module.exports = router;
