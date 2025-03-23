@@ -11,7 +11,12 @@ const voteRoutes = require('./routes/voteRoutes');
 const app = express();
 const port = process.env.PORT || 3525;
 
-app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:4200',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 app.use(bodyParser.json());
 
 // Configurar Multer para guardar imágenes en la carpeta "uploads"
