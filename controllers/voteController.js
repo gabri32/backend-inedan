@@ -33,13 +33,7 @@ async function createVote(req, res) {
       return res.status(400).json({ message: 'Datos incompletos para registrar el voto' });
     }
 
-    // Buscar el estudiante en la base de datos
-    const student = await students.findOne({ num_identificacion: estudiante_id });
-
-    if (!student) {
-      return res.status(404).json({ message: 'Estudiante no encontrado' });
-    }
-
+ 
     // Si es un voto en blanco, registrarlo sin candidato
     const newVote = await Vote.create({
       estudiante_id: estudiante_id,
@@ -58,12 +52,12 @@ async function createVote(req, res) {
 //funcion que obtiene los votos
 async function getVotes(req, res) {
   try {
+    const { estudiante_id } = req.query
+    if (!estudiante_id) {
+      return res.status(400).json({ message: 'El estudiante_id es requerido' });
+    }
     const votes = await Vote.findAll({
-      include: [
-        { model: students, as: 'estudiante' },
-        { model: Candidate, as: 'candidato' }
-      ],
-      // logging: console.log // Esto mostrará la consulta SQL en la consola
+      where: { estudiante_id: estudiante_id },
     });
     res.status(200).json(votes);
   } catch (error) {
