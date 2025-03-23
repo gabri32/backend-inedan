@@ -11,11 +11,18 @@ const voteRoutes = require('./routes/voteRoutes');
 const app = express();
 const port = process.env.PORT || 3525;
 
-app.use(cors({
-  origin: 'http://localhost:4200',
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "http://localhost:4200");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200); // Manejo del preflight request
+  }
+  
+  next();
+});
+
 
 app.use(bodyParser.json());
 
