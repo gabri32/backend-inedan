@@ -11,8 +11,17 @@ const voteRoutes = require('./routes/voteRoutes');
 const app = express();
 const port = process.env.PORT || 3525;
 
+const allowedOrigins = [
+  "http://localhost:4200",
+  "https://antonio-narino.netlify.app"
+];
+
 app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "http://localhost:4200");
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.header("Access-Control-Allow-Origin", origin);
+  }
+
   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
   res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
   
@@ -23,29 +32,17 @@ app.use((req, res, next) => {
   next();
 });
 
-
 app.use(bodyParser.json());
 
-// Configurar Multer para guardar imágenes en la carpeta "uploads"
-const storage = multer.diskStorage({
-  destination: "./uploads/",
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname)); // Nombre único
-  },
-});
 
+const storage = multer.memoryStorage(); // Almacena la imagen en memoria en lugar de en disco
 const upload = multer({ storage });
-
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-
 app.post('/api/upload', upload.single('image'), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: "No se subió ningún archivo" });
   }
 
-  const imageUrl = `https://backend-inedan.onrender.com/uploads/${req.file.filename}`;
-
-  res.json({ message: "Imagen subida correctamente", imageUrl });
+  res.json({ message: "Imagen subida correctamente", fileSize: req.file.size });
 });
 
 
