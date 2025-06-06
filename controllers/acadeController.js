@@ -137,6 +137,13 @@ async function createadmins(req,res) {
 async function getcursos(req,res) {
     try{
         const cursos = await Curso.findAll({
+             include: [
+                {
+                    model: Sede,
+                    as: 'sede_info', // 
+                    attributes: ['id', 'detalle'] // 
+                }
+            ]
         });
         if (cursos.length === 0) {
             return res.status(404).json({ message: "No se encontraron cursos" });
@@ -147,4 +154,47 @@ async function getcursos(req,res) {
         return res.status(500).json({ error: "Error en el servidor" });
     }
 }
-module.exports = { creationStudent,createProfesor, createadmins,getprofesores,getsedes,getcursos};
+// Crear curso
+async function createCurso(req, res) {
+    try {
+        const { nombre, descripcion, sede, ...resto } = req.body;
+        if (!nombre || !descripcion || !sede) {
+            return res.status(400).json({ error: "Faltan datos requeridos" });
+        }
+        const nuevoCurso = await Curso.create({
+            nombre,
+            descripcion,
+            sede,
+            profesor_id: 35, // Por defecto
+            ...resto
+        });
+        return res.status(201).json({ message: "Curso creado", curso: nuevoCurso });
+    } catch (error) {
+        console.error("Error al crear curso:", error);
+        return res.status(500).json({ error: "Error en el servidor" });
+    }
+}
+
+// Editar solo profesor_id y sede
+async function editCurso(req, res) {
+    try {
+        const { id } = req.params;
+        const { profesor_id, sede } = req.body;
+        if (!profesor_id && !sede) {
+            return res.status(400).json({ error: "Se requiere al menos profesor_id o sede para actualizar" });
+        }
+        const curso = await Curso.findByPk(id);
+        if (!curso) {
+            return res.status(404).json({ error: "Curso no encontrado" });
+        }
+        if (profesor_id) curso.profesor_id = profesor_id;
+        if (sede) curso.sede = sede;
+        await curso.save();
+        return res.status(200).json({ message: "Curso actualizado", curso });
+    } catch (error) {
+        console.error("Error al editar curso:", error);
+        return res.status(500).json({ error: "Error en el servidor" });
+    }
+}
+module.exports = { creationStudent,createProfesor, createadmins,getprofesores,getsedes,
+    getcursos,createCurso,editCurso};
