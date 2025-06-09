@@ -1,6 +1,16 @@
 const express = require('express');
-const { createUser, getUsers,login,gettypes,createproperty,getPropertiesC,getPropertiesD,updatePropierties,deletePropierties,bulkCreateUser } = require('../controllers/userController');
-const{creationStudent,createProfesor,createadmins,getprofesores,getsedes,getcursos,editCurso,createCurso}=require('../controllers/acadeController')
+const {createUser,
+    getUsers,
+    login,
+    gettypes,
+    createproperty,
+    getPropertiesC,
+    getPropertiesD,
+    updatePropierties,deletePropierties,bulkCreateUser } = require('../controllers/userController');
+const{creationStudent,createProfesor,
+    createadmins,getprofesores,getsedes,
+    getcursos,editCurso,createCurso,deletePropiertiescurso,
+    getasignaturas}=require('../controllers/acadeController')
 const {getsliderImages,updatesliderImages}=require('../controllers/manageController')
 const router = express.Router();
 const multer = require("multer");
@@ -28,4 +38,6 @@ router.get('/getsedes',getsedes)
 router.get('/getcursos',getcursos)
 router.post('/createCurso', createCurso);
 router.patch('/editCurso/:id', editCurso);
+router.patch('/deletePropiertiescurso/:id', deletePropiertiescurso);
+router.get('/getasignaturas', getasignaturas);
 module.exports = router;

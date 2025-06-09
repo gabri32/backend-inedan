@@ -22,7 +22,7 @@ app.use((req, res, next) => {
     res.header("Access-Control-Allow-Origin", origin);
   }
 
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS,PATCH");
   res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
   
   if (req.method === "OPTIONS") {
@@ -48,6 +48,11 @@ app.post('/api/upload', upload.single('image'), (req, res) => {
 
 app.use('/api', userRoutes);
 app.use('/api', voteRoutes);
+const Curso = require('./models/Curso');
+const Asignatura = require('./models/Asignatura');
+
+// Asociaciones problemáticas aquí
+Asignatura.belongsTo(Curso, { foreignKey: 'id_grado', as: 'curso' });
 
 app.listen(port, () => {
   console.log(`✅ Servidor corriendo en http://localhost:${port}`);

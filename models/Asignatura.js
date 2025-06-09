@@ -17,9 +17,12 @@ const Asignatura = sequelize.define('Asignatura', {
       key: 'id_profesor'
     }
   },
-  id_grado: DataTypes.INTEGER
+  id_grado: {
+    type: DataTypes.INTEGER,
+
+  }
 }, {
-     schema: 'academico',
+  schema: 'academico',
   tableName: 'asignaturas',
   timestamps: false
 });

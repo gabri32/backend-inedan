@@ -3,7 +3,7 @@ const Profesors = require('../models/profesors');
 const Admins = require('../models/admins');
 const Sede = require('../models/sede');
 const Curso = require('../models/Curso');
-
+const Asignatura = require('../models/Asignatura');
 
 
 
@@ -136,37 +136,46 @@ async function createadmins(req,res) {
 }
 async function getcursos(req,res) {
     try{
-        const cursos = await Curso.findAll({
-             include: [
-                {
-                    model: Sede,
-                    as: 'sede_info', // 
-                    attributes: ['id', 'detalle'] // 
-                }
-            ]
-        });
+const cursos = await Curso.findAll({
+    include: [
+        {
+            model: Sede,
+            as: 'sede_info', // Usa el alias definido en la asociación
+            attributes: ['id', 'detalle']
+        },
+        {
+            model: Profesors,
+            as: 'profesor', // Usa el alias definido en la asociación
+            attributes: ['id_profesor', 'nombre']
+        },
+          {
+            model: Asignatura,
+            as: 'asignaturas' // Usa el alias definido en la asociación
+            // Puedes agregar attributes si quieres limitar los campos
+        }
+    ]
+});
         if (cursos.length === 0) {
             return res.status(404).json({ message: "No se encontraron cursos" });
         }
         return res.status(200).json(cursos);
     }catch (error) {
-        console.error("Error en creación de administrador:", error);
+        console.error("Error ", error);
         return res.status(500).json({ error: "Error en el servidor" });
     }
 }
 // Crear curso
 async function createCurso(req, res) {
     try {
-        const { nombre, descripcion, sede, ...resto } = req.body;
-        if (!nombre || !descripcion || !sede) {
+        const { nombre, sede, cantidad,grado} = req.body;
+        if (!nombre || !sede) {
             return res.status(400).json({ error: "Faltan datos requeridos" });
         }
         const nuevoCurso = await Curso.create({
             nombre,
-            descripcion,
             sede,
-            profesor_id: 35, // Por defecto
-            ...resto
+            cantidad, // Por defecto
+            tipo_grado:grado
         });
         return res.status(201).json({ message: "Curso creado", curso: nuevoCurso });
     } catch (error) {
@@ -196,5 +205,63 @@ async function editCurso(req, res) {
         return res.status(500).json({ error: "Error en el servidor" });
     }
 }
-module.exports = { creationStudent,createProfesor, createadmins,getprofesores,getsedes,
-    getcursos,createCurso,editCurso};
+async function deletePropiertiescurso(req, res) {
+    try {
+   const { id } = req.params;
+        const { profesor_id, sede } = req.body;
+    //    if (!profesor_id && !sede) {
+    //         return res.status(400).json({ error: "Se requiere al menos profesor_id o sede para actualizar" });
+    //     }
+          const curso = await Curso.findByPk(id);
+        if (!curso) {
+            return res.status(404).json({ error: "Curso no encontrado" });
+        }
+        console.log("Curso encontrado:", curso.id);
+         curso.profesor_id =null
+        if (sede) curso.sede = sede;
+        console.log("Curso actualizado:", curso);
+        await curso.save();
+        return res.status(200).json({ message: "Propiedad eliminada exitosamente" });
+    } catch (error) {
+        console.error("Error al eliminar propiedad:", error);
+        return res.status(500).json({ error: "Error en el servidor" });
+    }
+    
+}
+
+async function getasignaturas(req, res) {
+    try {
+        const asignaturas = await Asignatura.findAll({
+            include: [
+                {
+                    model: Curso,
+                    as: 'curso', // Usa el alias definido en la asociación
+                    attributes: ['id', 'nombre']
+                },
+                {
+                    model: Profesors,
+                    as: 'profesor', // Usa el alias definido en la asociación
+                    attributes: ['id_profesor', 'nombre']
+                }
+            ]
+        });
+        if (asignaturas.length === 0) {
+            return res.status(404).json({ message: "No se encontraron asignaturas" });
+        }
+        return res.status(200).json(asignaturas);
+    } catch (error) {
+        console.error("Error al obtener asignaturas:", error);
+        return res.status(500).json({ error: "Error en el servidor" });
+    }
+}
+module.exports = { 
+    creationStudent,
+    createProfesor, 
+    createadmins,
+    getprofesores,
+    getsedes,
+    getcursos,
+    createCurso,
+    editCurso,
+deletePropiertiescurso,
+getasignaturas};
