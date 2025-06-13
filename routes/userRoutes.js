@@ -1,20 +1,20 @@
 const express = require('express');
-const {createUser,
+const router = express.Router();
+const multer = require("multer");
+const { createUser,
     getUsers,
     login,
     gettypes,
     createproperty,
     getPropertiesC,
     getPropertiesD,
-    updatePropierties,deletePropierties,bulkCreateUser } = require('../controllers/userController');
-const{creationStudent,createProfesor,
-    createadmins,getprofesores,getsedes,
-    getcursos,editCurso,createCurso,deletePropiertiescurso,
-    getasignaturas}=require('../controllers/acadeController')
-const {getsliderImages,updatesliderImages}=require('../controllers/manageController')
-const router = express.Router();
-const multer = require("multer");
-
+    updatePropierties, deletePropierties, bulkCreateUser } = require('../controllers/userController');
+const { creationStudent, createProfesor,
+    createadmins, getprofesores, getsedes,
+    getcursos, editCurso, createCurso, deletePropiertiescurso,
+    getasignaturas, aditasignatura
+,deletePropiertieasig } = require('../controllers/acadeController')
+const { getsliderImages, updatesliderImages } = require('../controllers/manageController')
 // Configurar multer para almacenar la imagen en memoria (BLOB)
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
@@ -38,6 +38,10 @@ router.get('/getsedes',getsedes)
 router.get('/getcursos',getcursos)
 router.post('/createCurso', createCurso);
 router.patch('/editCurso/:id', editCurso);
+router.patch('/aditasignatura/:id', aditasignatura);
 router.patch('/deletePropiertiescurso/:id', deletePropiertiescurso);
+router.patch('/deletePropiertieasig/:id', deletePropiertieasig);
 router.get('/getasignaturas', getasignaturas);
+
+
 module.exports = router;

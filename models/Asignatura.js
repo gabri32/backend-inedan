@@ -11,7 +11,7 @@ const Asignatura = sequelize.define('Asignatura', {
   descripcion: DataTypes.STRING,
   id_profesor: {
     type: DataTypes.INTEGER,
-    allowNull: false,
+    allowNull: true,
     references: {
       model: Profesor,
       key: 'id_profesor'

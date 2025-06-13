@@ -205,6 +205,25 @@ async function editCurso(req, res) {
         return res.status(500).json({ error: "Error en el servidor" });
     }
 }
+async function aditasignatura(req, res) {
+    try {
+                const { id } = req.params;
+        const { profesor_id } = req.body; 
+        const asignatura = await Asignatura.findByPk(id);
+        if (!asignatura) {
+            return res.status(404).json({ error: "Asignatura no encontrada" });
+        }
+        if (!profesor_id) {
+            return res.status(400).json({ error: "Se requiere profesor_id para actualizar" });
+        }
+        asignatura.id_profesor = profesor_id;
+        await asignatura.save();
+          return res.status(200).json({ message: "Curso actualizado", asignatura });
+    } catch (error) {
+        console.error("Error al editar asignatura:", error);
+        return res.status(500).json({ error: "Error en el servidor" });
+    }
+}
 async function deletePropiertiescurso(req, res) {
     try {
    const { id } = req.params;
@@ -228,32 +247,52 @@ async function deletePropiertiescurso(req, res) {
     }
     
 }
-
-async function getasignaturas(req, res) {
+async function deletePropiertieasig(req, res) {
     try {
-        const asignaturas = await Asignatura.findAll({
-            include: [
-                {
-                    model: Curso,
-                    as: 'curso', // Usa el alias definido en la asociación
-                    attributes: ['id', 'nombre']
-                },
-                {
-                    model: Profesors,
-                    as: 'profesor', // Usa el alias definido en la asociación
-                    attributes: ['id_profesor', 'nombre']
-                }
-            ]
-        });
-        if (asignaturas.length === 0) {
-            return res.status(404).json({ message: "No se encontraron asignaturas" });
-        }
-        return res.status(200).json(asignaturas);
+   const { id } = req.params;
+        const asignatura = await Asignatura.findByPk(id);
+        if (!asignatura) {
+            return res.status(404).json({ error: "Asignatura no encontrada" });
+        }        
+        asignatura.id_profesor = null; // Elimina la asignación del profesor
+        await asignatura.save();
+        return res.status(200).json({ message: "Propiedad eliminada exitosamente" });
     } catch (error) {
-        console.error("Error al obtener asignaturas:", error);
+        console.error("Error al eliminar propiedad:", error);
         return res.status(500).json({ error: "Error en el servidor" });
     }
+    
 }
+
+async function getasignaturas(req, res) {
+  try {
+    const cursos = await Curso.findAll({
+      include: [
+        {
+          model: Asignatura,
+          as: 'asignaturas', // asegúrate de que el alias sea el mismo definido en la asociación
+          include: [
+            {
+              model: Profesors,
+              as: 'profesor', // igual, usa el alias definido
+              attributes: ['id_profesor', 'nombre']
+            }
+          ]
+        }
+      ]
+    });
+
+    if (cursos.length === 0) {
+      return res.status(404).json({ message: "No se encontraron cursos con asignaturas" });
+    }
+
+    return res.status(200).json(cursos);
+  } catch (error) {
+    console.error("Error al obtener cursos con asignaturas:", error);
+    return res.status(500).json({ error: "Error en el servidor" });
+  }
+}
+
 module.exports = { 
     creationStudent,
     createProfesor, 
@@ -264,4 +303,5 @@ module.exports = {
     createCurso,
     editCurso,
 deletePropiertiescurso,
-getasignaturas};
+getasignaturas,
+aditasignatura,deletePropiertieasig};
