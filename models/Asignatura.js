@@ -20,8 +20,10 @@ const Asignatura = sequelize.define('Asignatura', {
   id_grado: {
     type: DataTypes.INTEGER,
 
-  }
-}, {
+  },
+  cantidad_horas_week: {
+    type: DataTypes.INTEGER,  
+}}, {
   schema: 'academico',
   tableName: 'asignaturas',
   timestamps: false

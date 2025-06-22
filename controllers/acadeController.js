@@ -4,7 +4,239 @@ const Admins = require('../models/admins');
 const Sede = require('../models/sede');
 const Curso = require('../models/Curso');
 const Asignatura = require('../models/Asignatura');
+const pool = require('../db');
 
+async function estudiantesAgrupados(req, res) {
+    try {
+        const result = await pool.query(`
+     SELECT grado,sd.detalle as sede, COUNT(*) as cantidad
+      FROM academico.estudiantes es
+      join academico.sedes  sd ON es.id_sede = sd.id
+      GROUP BY grado, id_sede,sd.detalle
+      ORDER BY id_sede, grado
+    `);
+
+    res.json(result.rows);
+    } catch (error) {
+        console.error("Error al agrupar estudiantes:", error);
+        return res.status(500).json({ error: "Error en el servidor" });
+        
+    }
+}
+const asignaturasPorGrado = {
+  2: [
+    { nombre: 'Inglés', horas: 2 },
+    { nombre: 'Castellano', horas: 5 },
+    { nombre: 'Matemáticas', horas: 5 },
+    { nombre: 'Ciencias Naturales', horas: 3 },
+    { nombre: 'Tecnología e informática', horas: 2 },
+    { nombre: 'Ciencias sociales y competencias ciudadanas', horas: 3 },
+    { nombre: 'Educación física, recreación y deporte', horas: 2 },
+    { nombre: 'Religión, ética y valores', horas: 1 },
+    { nombre: 'Educación artística', horas: 2 },
+  ],
+  3: [
+    { nombre: 'Inglés', horas: 2 },
+    { nombre: 'Castellano', horas: 5 },
+    { nombre: 'Matemáticas', horas: 5 },
+    { nombre: 'Ciencias Naturales', horas: 3 },
+    { nombre: 'Tecnología e informática', horas: 2 },
+    { nombre: 'Ciencias sociales y competencias ciudadanas', horas: 3 },
+    { nombre: 'Educación física, recreación y deporte', horas: 2 },
+    { nombre: 'Religión, ética y valores', horas: 1 },
+    { nombre: 'Educación artística', horas: 2 },
+  ],
+   4: [
+    { nombre: 'Inglés', horas: 2 },
+    { nombre: 'Castellano', horas: 5 },
+    { nombre: 'Matemáticas', horas: 5 },
+    { nombre: 'Ciencias Naturales', horas: 3 },
+    { nombre: 'Tecnología e informática', horas: 2 },
+    { nombre: 'Ciencias sociales y competencias ciudadanas', horas: 3 },
+    { nombre: 'Educación física, recreación y deporte', horas: 2 },
+    { nombre: 'Religión, ética y valores', horas: 1 },
+    { nombre: 'Educación artística', horas: 2 },
+    ],
+5: [
+            { nombre: 'Inglés', horas: 2 },
+    { nombre: 'Castellano', horas: 5 },
+    { nombre: 'Matemáticas', horas: 5 },
+    { nombre: 'Ciencias Naturales', horas: 3 },
+    { nombre: 'Tecnología e informática', horas: 2 },
+    { nombre: 'Ciencias sociales y competencias ciudadanas', horas: 3 },
+    { nombre: 'Educación física, recreación y deporte', horas: 2 },
+    { nombre: 'Religión, ética y valores', horas: 1 },
+    { nombre: 'Educación artística', horas: 2 },
+    ],
+6:[
+    { nombre: 'Inglés', horas: 2 },
+    { nombre: 'Castellano', horas: 5 },
+    { nombre: 'Matemáticas', horas: 5 },
+    { nombre: 'Ciencias Naturales', horas: 3 },
+    { nombre: 'Tecnología e informática', horas: 2 },
+    { nombre: 'Ciencias sociales y competencias ciudadanas', horas: 3 },
+    { nombre: 'Educación física, recreación y deporte', horas: 2 },
+    { nombre: 'Religión, ética y valores', horas: 1 },
+    { nombre: 'Educación artística', horas: 2 },
+    ],
+  7: [
+    { nombre: 'Inglés', horas: 4 },
+    { nombre: 'Castellano', horas: 5 },
+    { nombre: 'Matemáticas', horas: 5 },
+    { nombre: 'Ciencias Naturales', horas: 3 },
+    { nombre: 'Tecnología e informática', horas: 2 },
+    { nombre: 'Física', horas: 2 },
+    { nombre: 'Química', horas: 2 },
+    { nombre: 'Ciencias sociales y competencias ciudadanas', horas: 3 },
+    { nombre: 'Educación física, recreación y deporte', horas: 2 },
+    { nombre: 'Religión, ética y valores', horas: 1 },
+    { nombre: 'Educación artística', horas: 2 }
+  ],
+  8: [
+    { nombre: 'Inglés', horas: 4 },
+    { nombre: 'Castellano', horas: 5 },
+    { nombre: 'Matemáticas', horas: 5 },
+    { nombre: 'Ciencias Naturales', horas: 3 },
+    { nombre: 'Tecnología e informática', horas: 2 },
+    { nombre: 'Física', horas: 2 },
+    { nombre: 'Química', horas: 2 },
+    { nombre: 'Ciencias sociales y competencias ciudadanas', horas: 3 },
+    { nombre: 'Educación física, recreación y deporte', horas: 2 },
+    { nombre: 'Religión, ética y valores', horas: 1 },
+    { nombre: 'Educación artística', horas: 2 }
+  ],
+  9: [
+    { nombre: 'Inglés', horas: 4 },
+    { nombre: 'Castellano', horas: 5 },
+    { nombre: 'Matemáticas', horas: 5 },
+    { nombre: 'Ciencias Naturales', horas: 3 },
+    { nombre: 'Tecnología e informática', horas: 2 },
+    { nombre: 'Física', horas: 3 },
+    { nombre: 'Química', horas: 3 },
+    { nombre: 'Ciencias sociales y competencias ciudadanas', horas: 3 },
+    { nombre: 'Sociopolítico y competencias ciudadanas', horas: 4 },
+    { nombre: 'Educación física, recreación y deporte', horas: 2 },
+    { nombre: 'Religión, ética y valores', horas: 1 },
+    { nombre: 'Educación artística', horas: 2 }
+  ],
+  10: [
+    { nombre: 'Inglés', horas: 3 },
+    { nombre: 'Castellano', horas: 4 },
+    { nombre: 'Filosofía', horas: 2 },
+    { nombre: 'Matemáticas', horas: 5 },
+    { nombre: 'Ciencias Naturales', horas: 3 },
+    { nombre: 'Tecnología e informática', horas: 2 },
+    { nombre: 'Física', horas: 3 },
+    { nombre: 'Química', horas: 3 },
+    { nombre: 'Ciencias sociales y competencias ciudadanas', horas: 3 },
+    { nombre: 'Sociopolítico y competencias ciudadanas', horas: 4 },
+    { nombre: 'Educación física, recreación y deporte', horas: 2 },
+    { nombre: 'Religión, ética y valores', horas: 1 },
+    { nombre: 'Educación artística', horas: 2 }
+  ],
+  11: [
+    { nombre: 'Inglés', horas: 3 },
+    { nombre: 'Castellano', horas: 3 },
+    { nombre: 'Filosofía', horas: 3 },
+    { nombre: 'Matemáticas', horas: 4 },
+    { nombre: 'Física', horas: 3 },
+    { nombre: 'Química', horas: 3 },
+    { nombre: 'Ciencias sociales y competencias ciudadanas', horas: 3 },
+    { nombre: 'Sociopolítico y competencias ciudadanas', horas: 5 },
+    { nombre: 'Educación física, recreación y deporte', horas: 2 },
+    { nombre: 'Religión, ética y valores', horas: 1 },
+    { nombre: 'Educación artística', horas: 2 }
+  ],
+  12: [
+    { nombre: 'Inglés', horas: 3 },
+    { nombre: 'Castellano', horas: 3 },
+    { nombre: 'Filosofía', horas: 3 },
+    { nombre: 'Matemáticas', horas: 4 },
+    { nombre: 'Física', horas: 3 },
+    { nombre: 'Química', horas: 3 },
+    { nombre: 'Ciencias sociales y competencias ciudadanas', horas: 3 },
+    { nombre: 'Sociopolítico y competencias ciudadanas', horas: 5 },
+    { nombre: 'Economía política y competencias ciudadanas', horas: 5 },
+    { nombre: 'Educación física, recreación y deporte', horas: 2 },
+    { nombre: 'Religión, ética y valores', horas: 1 },
+    { nombre: 'Educación artística', horas: 2 }
+  ]
+
+
+};
+async function crearAsignaturas(idCurso, tipoGrado) {
+  const asignaturas = asignaturasPorGrado[tipoGrado];
+  if (!asignaturas) return;
+
+  for (const { nombre, horas } of asignaturas) {
+    await Asignatura.create({
+      descripcion: nombre,
+      cantidad_horas_week: horas,
+      id_grado: idCurso
+    });
+    console.log(`Asignatura creada: ${nombre} (${horas}h)`);
+  }
+}
+async function createCurses(req, res) {
+  try {
+    const result = await pool.query(`
+      SELECT grado, sd.detalle AS sede, sd.id AS nombresede, COUNT(*) AS cantidad
+      FROM academico.estudiantes es
+      JOIN academico.sedes sd ON es.id_sede = sd.id
+      GROUP BY grado, id_sede, sd.detalle, sd.id
+      ORDER BY id_sede, grado
+    `);
+
+    const cursos = result.rows;
+    const vigencia = new Date().getFullYear();
+
+    for (const curso of cursos) {
+      const { grado, sede, cantidad, nombresede } = curso;
+      const tipoGrado = grado + 1;
+
+      const crearCursoSiNoExiste = async (nombreCurso, cantidadCurso) => {
+        const existe = await Curso.findOne({
+          where: {
+            tipo_grado: tipoGrado,
+            sede: nombresede,
+            nombre: nombreCurso,
+            vigencia: vigencia.toString()
+          }
+        });
+
+        if (!existe) {
+          const nuevoCurso = await Curso.create({
+            nombre: nombreCurso,
+            cantidad: cantidadCurso,
+            tipo_grado: tipoGrado,
+            sede: nombresede,
+            vigencia: vigencia.toString()
+          });
+
+          console.log(`Curso creado: ${nuevoCurso.nombre}`);
+          await crearAsignaturas(nuevoCurso.id, tipoGrado+1);
+        } else {
+          console.log(`Curso ya existe: ${nombreCurso}`);
+        }
+      };
+
+      if (cantidad > 38) {
+        for (let i = 1; i <= 2; i++) {
+          const nombreCurso = `Curso ${grado}-${i} - ${sede}`;
+          await crearCursoSiNoExiste(nombreCurso, Math.ceil(cantidad / 2));
+        }
+      } else {
+        const nombreCurso = `Curso ${grado} - ${sede}`;
+        await crearCursoSiNoExiste(nombreCurso, cantidad);
+      }
+    }
+
+    return res.json({ message: 'Cursos y asignaturas creadas correctamente.' });
+  } catch (error) {
+    console.error("Error al crear curso:", error);
+    return res.status(500).json({ error: "Error en el servidor" });
+  }
+}
 
 
 async function creationStudent(req, res) {
@@ -78,20 +310,37 @@ async function createProfesor(req, res) {
 
 async function getprofesores(req, res) {
     try {
+        // 1. Trae todos los profesores con su sede
         const profesores = await Profesors.findAll({
             attributes: ['id_profesor', 'nombre', 'especialidad', 'vigencia', 'sede', 'num_identificacion'],
             include: [
                 {
                     model: Sede,
-                    as: 'sede_info', // 
-                    attributes: ['id', 'detalle'] // 
+                    as: 'sede_info',
+                    attributes: ['id', 'detalle']
                 }
             ]
         });
+
         if (profesores.length === 0) {
             return res.status(404).json({ message: "No se encontraron profesores" });
         }
-        return res.status(200).json(profesores);
+
+        // 2. Para cada profesor, busca sus asignaturas
+        const profesoresConAsignaturas = await Promise.all(
+            profesores.map(async prof => {
+                const asignaturas = await Asignatura.findAll({
+                    where: { id_profesor: prof.id_profesor },
+                    attributes: ['id_asignatura', 'descripcion', 'cantidad_horas_week', 'id_grado']
+                });
+                // Convierte a objeto plano y agrega las asignaturas
+                const profObj = prof.toJSON();
+                profObj.asignaturas = asignaturas;
+                return profObj;
+            })
+        );
+
+        return res.status(200).json(profesoresConAsignaturas);
     } catch (error) {
         console.error("Error al obtener profesores:", error);
         return res.status(500).json({ error: "Error en el servidor" });
@@ -136,21 +385,24 @@ async function createadmins(req,res) {
 }
 async function getcursos(req,res) {
     try{
+const vigenciaActual = new Date().getFullYear().toString();
+
 const cursos = await Curso.findAll({
+    where: { vigencia: vigenciaActual },
     include: [
         {
             model: Sede,
-            as: 'sede_info', // Usa el alias definido en la asociación
+            as: 'sede_info',
             attributes: ['id', 'detalle']
         },
         {
             model: Profesors,
-            as: 'profesor', // Usa el alias definido en la asociación
+            as: 'profesor',
             attributes: ['id_profesor', 'nombre']
         },
-          {
+        {
             model: Asignatura,
-            as: 'asignaturas' // Usa el alias definido en la asociación
+            as: 'asignaturas'
             // Puedes agregar attributes si quieres limitar los campos
         }
     ]
@@ -304,4 +556,7 @@ module.exports = {
     editCurso,
 deletePropiertiescurso,
 getasignaturas,
-aditasignatura,deletePropiertieasig};
+aditasignatura,deletePropiertieasig, 
+ estudiantesAgrupados,
+ createCurses
+};

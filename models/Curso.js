@@ -25,7 +25,8 @@ const Curso = sequelize.define('Curso', {
       model: Sede,
       key: 'id'
     }
-  }
+  },
+  vigencia: DataTypes.STRING,
 }, {
      schema: 'academico',
   tableName: 'cursos',

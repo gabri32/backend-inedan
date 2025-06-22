@@ -63,13 +63,11 @@ async function getUsers(req, res) {
 
 async function login(req, res) {
   try {
-
     const { num_identificacion, contraseña } = req.body;
 
-    // Buscar usuario por num
+    // Buscar usuario por num_identificacion
     const usuario = await User.findOne({ where: { num_identificacion } });
 
-    // Verificar si el usuario existe
     if (!usuario) {
       return res.status(404).json({ message: 'Usuario no encontrado' });
     }
@@ -80,14 +78,29 @@ async function login(req, res) {
     if (!isMatch) {
       return res.status(401).json({ message: 'Contraseña incorrecta' });
     }
-    // ✅ Generar el token con JWT
+
+    // Buscar si es profesor
+    const Profesor = require('../models/profesors');
+    const profesor = await Profesor.findOne({ where: { num_identificacion } });
+
+    // Buscar si es estudiante
+    const Estudiante = require('../models/students');
+    const estudiante = await Estudiante.findOne({ where: { num_identificacion } });
+
+    // Generar el token con JWT
     const token = jwt.sign(
-      { id: usuario.id, num_identificacion: usuario.num_identificacion }, // Datos del usuario
-      process.env.JWT_SECRET, // Clave secreta
-      { expiresIn: process.env.JWT_EXPIRES_IN } // Tiempo de expiración
+      { id: usuario.id, num_identificacion: usuario.num_identificacion },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN }
     );
-    // Si todo está bien, devolver datos del usuario
-    res.status(200).json({ message: 'Login exitoso', user: usuario, token: token });
+
+    res.status(200).json({
+      message: 'Login exitoso',
+      user: usuario,
+      token: token,
+      profesor: profesor || null,
+      estudiante: estudiante || null
+    });
 
   } catch (error) {
     console.error('Error en login:', error);

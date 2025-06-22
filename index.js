@@ -7,7 +7,8 @@ require('./config/database');
 
 const userRoutes = require('./routes/userRoutes');
 const voteRoutes = require('./routes/voteRoutes');
-
+const landingRoutes = require('./routes/landingRoutes');
+const incripcionRoutes = require('./routes/incripcionRoutes');
 const app = express();
 const port = process.env.PORT || 3525;
 
@@ -45,9 +46,11 @@ app.post('/api/upload', upload.single('image'), (req, res) => {
   res.json({ message: "Imagen subida correctamente", fileSize: req.file.size });
 });
 
-
+app.use('/api/landing', landingRoutes);
 app.use('/api', userRoutes);
 app.use('/api', voteRoutes);
+app.use('/api', incripcionRoutes);
+
 const Curso = require('./models/Curso');
 const Asignatura = require('./models/Asignatura');
 
