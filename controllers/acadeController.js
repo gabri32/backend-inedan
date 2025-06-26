@@ -9,10 +9,10 @@ const pool = require('../db');
 async function estudiantesAgrupados(req, res) {
   try {
     const result = await pool.query(`
-     SELECT grado,sd.detalle as sede, COUNT(*) as cantidad
+  SELECT grado,sd.detalle as sede,sd.id, COUNT(*) as cantidad
       FROM academico.estudiantes es
       join academico.sedes  sd ON es.id_sede = sd.id
-      GROUP BY grado, id_sede,sd.detalle
+      GROUP BY grado, id_sede,sd.detalle,sd.id
       ORDER BY id_sede, grado
     `);
 
@@ -24,6 +24,17 @@ async function estudiantesAgrupados(req, res) {
   }
 }
 const asignaturasPorGrado = {
+  1: [
+    { nombre: 'Inglés', horas: 2 },
+    { nombre: 'Castellano', horas: 5 },
+    { nombre: 'Matemáticas', horas: 5 },
+    { nombre: 'Ciencias Naturales', horas: 3 },
+    { nombre: 'Tecnología e informática', horas: 2 },
+    { nombre: 'Ciencias sociales y competencias ciudadanas', horas: 3 },
+    { nombre: 'Educación física, recreación y deporte', horas: 2 },
+    { nombre: 'Religión, ética y valores', horas: 1 },
+    { nombre: 'Educación artística', horas: 2 },
+  ],
   2: [
     { nombre: 'Inglés', horas: 2 },
     { nombre: 'Castellano', horas: 5 },
@@ -69,15 +80,17 @@ const asignaturasPorGrado = {
     { nombre: 'Educación artística', horas: 2 },
   ],
   6: [
-    { nombre: 'Inglés', horas: 2 },
+    { nombre: 'Inglés', horas: 4 },
     { nombre: 'Castellano', horas: 5 },
     { nombre: 'Matemáticas', horas: 5 },
     { nombre: 'Ciencias Naturales', horas: 3 },
     { nombre: 'Tecnología e informática', horas: 2 },
+    { nombre: 'Física', horas: 2 },
+    { nombre: 'Química', horas: 2 },
     { nombre: 'Ciencias sociales y competencias ciudadanas', horas: 3 },
     { nombre: 'Educación física, recreación y deporte', horas: 2 },
     { nombre: 'Religión, ética y valores', horas: 1 },
-    { nombre: 'Educación artística', horas: 2 },
+    { nombre: 'Educación artística', horas: 2 }
   ],
   7: [
     { nombre: 'Inglés', horas: 4 },
@@ -98,19 +111,6 @@ const asignaturasPorGrado = {
     { nombre: 'Matemáticas', horas: 5 },
     { nombre: 'Ciencias Naturales', horas: 3 },
     { nombre: 'Tecnología e informática', horas: 2 },
-    { nombre: 'Física', horas: 2 },
-    { nombre: 'Química', horas: 2 },
-    { nombre: 'Ciencias sociales y competencias ciudadanas', horas: 3 },
-    { nombre: 'Educación física, recreación y deporte', horas: 2 },
-    { nombre: 'Religión, ética y valores', horas: 1 },
-    { nombre: 'Educación artística', horas: 2 }
-  ],
-  9: [
-    { nombre: 'Inglés', horas: 4 },
-    { nombre: 'Castellano', horas: 5 },
-    { nombre: 'Matemáticas', horas: 5 },
-    { nombre: 'Ciencias Naturales', horas: 3 },
-    { nombre: 'Tecnología e informática', horas: 2 },
     { nombre: 'Física', horas: 3 },
     { nombre: 'Química', horas: 3 },
     { nombre: 'Ciencias sociales y competencias ciudadanas', horas: 3 },
@@ -119,7 +119,7 @@ const asignaturasPorGrado = {
     { nombre: 'Religión, ética y valores', horas: 1 },
     { nombre: 'Educación artística', horas: 2 }
   ],
-  10: [
+  9: [
     { nombre: 'Inglés', horas: 3 },
     { nombre: 'Castellano', horas: 4 },
     { nombre: 'Filosofía', horas: 2 },
@@ -134,7 +134,7 @@ const asignaturasPorGrado = {
     { nombre: 'Religión, ética y valores', horas: 1 },
     { nombre: 'Educación artística', horas: 2 }
   ],
-  11: [
+  10: [
     { nombre: 'Inglés', horas: 3 },
     { nombre: 'Castellano', horas: 3 },
     { nombre: 'Filosofía', horas: 3 },
@@ -147,7 +147,7 @@ const asignaturasPorGrado = {
     { nombre: 'Religión, ética y valores', horas: 1 },
     { nombre: 'Educación artística', horas: 2 }
   ],
-  12: [
+  11: [
     { nombre: 'Inglés', horas: 3 },
     { nombre: 'Castellano', horas: 3 },
     { nombre: 'Filosofía', horas: 3 },
@@ -192,7 +192,7 @@ async function createCurses(req, res) {
 
     for (const curso of cursos) {
       const { grado, sede, cantidad, nombresede } = curso;
-      const tipoGrado = grado + 1;
+      const tipoGrado = grado ;
 
       const crearCursoSiNoExiste = async (nombreCurso, cantidadCurso) => {
         const existe = await Curso.findOne({
@@ -222,11 +222,11 @@ async function createCurses(req, res) {
 
       if (cantidad > 38) {
         for (let i = 1; i <= 2; i++) {
-          const nombreCurso = `Curso ${grado}-${i} - ${sede}`;
+          const nombreCurso = `Curso ${grado-1}-${i} - ${sede}`;
           await crearCursoSiNoExiste(nombreCurso, Math.ceil(cantidad / 2));
         }
       } else {
-        const nombreCurso = `Curso ${grado} - ${sede}`;
+        const nombreCurso = `Curso ${grado-1}- ${sede}`;
         await crearCursoSiNoExiste(nombreCurso, cantidad);
       }
     }
@@ -588,6 +588,17 @@ async function createWorks(req, res) {
     return res.status(500).json({ error: "Error en el servidor" });
   }
 }
+async function gettotalcursos(req, res) {
+  try {
+    const cursos = await pool.query(`
+ select * from academico.cursos
+    `);
+    return res.status(200).json(cursos.rows);
+  } catch (error) {
+    console.error("Error al obtener cursos:", error);
+    return res.status(500).json({ error: "Error en el servidor" });
+  }
+}
 
 
 async function getTalleres(req, res) {
@@ -603,6 +614,119 @@ async function getTalleres(req, res) {
     return res.status(500).json({ error: "Error en el servidor" });
   }
 }
+
+async function estudiantesPorgrado(req, res) {
+  try {
+    console.log(req.query);
+    const { grado, sede,id } = req.query;
+    const estudiantes = await pool.query(`select * from academico.estudiantes where grado = ${grado} and id_sede = ${sede}`);
+    if (estudiantes.rows.length === 0) {
+      return res.status(404).json({ message: "No se encontraron estudiantes para este grado" });
+    }
+    return res.status(200).json(estudiantes.rows);
+  } catch (error) {
+    console.error("Error al obtener estudiantes por grado:", error);
+    return res.status(500).json({ error: "Error en el servidor" });
+  }
+}   
+
+const actualizarEstudiantesAsignados = async (req, res) => {
+  const cursoId = req.params.id;
+  const { estudiantes } = req.body; // array de IDs
+console.log("Curso ID:", cursoId);
+  console.log("Estudiantes a asignar:", estudiantes);
+  if (!Array.isArray(estudiantes)) {
+    return res.status(400).json({ message: 'El cuerpo debe contener un array de estudiantes.' });
+  }
+
+  try {
+    await pool.query(` UPDATE academico.cursos 
+       SET estudiantes_asignados = to_json($1::int[]) 
+       WHERE id = $2`,
+      [estudiantes, cursoId]
+    );
+    return res.status(200).json({ message: 'Estudiantes asignados actualizados correctamente.' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Error al actualizar los estudiantes asignados.' });
+  }
+};
+async function consultarEstudianteCursoAsignaturas(req, res) {
+  try {
+    const { identificacion } = req.query;
+
+    // 1. Buscar estudiante
+    const estudianteResult = await pool.query(
+      `SELECT * FROM academico.estudiantes WHERE num_identificacion = $1`,
+      [identificacion]
+    );
+
+    if (estudianteResult.rowCount === 0) {
+      return res.status(404).json({ message: 'Estudiante no encontrado.' });
+    }
+
+    const estudiante = estudianteResult.rows[0];
+    const gradoEstudiante = estudiante.grado;
+
+    // 2. Buscar cursos del grado del estudiante
+    const cursosResult = await pool.query(
+      `SELECT * FROM academico.cursos WHERE tipo_grado = $1`,
+      [gradoEstudiante]
+    );
+
+    if (cursosResult.rowCount === 0) {
+      return res.status(404).json({ message: 'No hay cursos para este grado.' });
+    }
+
+    const idGrado = cursosResult.rows[0].id;
+
+    // 3. Buscar asignaturas para el curso
+    const asignaturasResult = await pool.query(
+      `SELECT * FROM academico.asignaturas WHERE id_grado = $1`,
+      [idGrado]
+    );
+
+    return res.status(200).json({
+      estudiante,
+      cursos: cursosResult.rows,
+      asignaturas: asignaturasResult.rows,
+    });
+
+  } catch (error) {
+    console.error('Error en consulta dinámica:', error);
+    return res.status(500).json({ message: 'Error del servidor' });
+  }
+}
+async function obtenerTalleresPorAsignatura(req, res) {
+  const { id } = req.params;
+
+  try {
+    const resultado = await pool.query(
+      `SELECT * FROM academico.talleres WHERE id_asignatura = $1`,
+      [id]
+    );
+
+    const talleres = resultado.rows;
+
+    const respuesta = {
+      periodo_1: [],
+      periodo_2: [],
+      periodo_3: []
+    };
+
+    for (const taller of talleres) {
+      if (taller.periodo === 1) respuesta.periodo_1.push(taller);
+      else if (taller.periodo === 2) respuesta.periodo_2.push(taller);
+      else if (taller.periodo === 3) respuesta.periodo_3.push(taller);
+    }
+
+    res.status(200).json(respuesta);
+  } catch (error) {
+    console.error('Error al obtener talleres:', error);
+    res.status(500).json({ message: 'Error al obtener talleres' });
+  }
+};
+
 module.exports = {
   creationStudent,
   createProfesor,
@@ -619,5 +743,10 @@ module.exports = {
   createCurses,
   getAsingDocente,
   createWorks,
-  getTalleres
+  getTalleres,
+  estudiantesPorgrado,
+  gettotalcursos,
+  actualizarEstudiantesAsignados,
+  consultarEstudianteCursoAsignaturas,
+  obtenerTalleresPorAsignatura
 };
