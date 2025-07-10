@@ -8,7 +8,7 @@ const { createUser,
     createproperty,
     getPropertiesC,
     getPropertiesD,
-    updatePropierties, deletePropierties, bulkCreateUser } = require('../controllers/userController');
+    updatePropierties, deletePropierties, bulkCreateUser,roles } = require('../controllers/userController');
 const { creationStudent, createProfesor,
     createadmins, getprofesores, getsedes,
     getcursos, editCurso, createCurso, deletePropiertiescurso,
@@ -20,7 +20,7 @@ const { getsliderImages, updatesliderImages } = require('../controllers/manageCo
 // Configurar multer para almacenar la imagen en memoria (BLOB)
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
-router.post('/users', createUser);
+router.post('/user', createUser);
 router.get('/getusers', getUsers);
 router.post('/login',login);
 router.post('/creationStudent',creationStudent)
@@ -54,5 +54,7 @@ router.get('/gettotalcursos', gettotalcursos);
 router.patch('/actualizarEstudiantesAsignados/:id', actualizarEstudiantesAsignados);
 router.get('/consultarEstudianteCursoAsignaturas', consultarEstudianteCursoAsignaturas);
 router.get('/talleres/asignatura/:id', obtenerTalleresPorAsignatura);
+router.get('/roles', roles);
+
 module.exports = router;
     

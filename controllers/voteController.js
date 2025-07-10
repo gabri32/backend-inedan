@@ -208,4 +208,34 @@ res.json({
 }
 }
 
-module.exports = { createVote, getVotes,searchStudent,createCandidate,searchCandidate,grafVotes,removeCandidate,saveImage,saerchidstudent };
+async function getEventos(req, res) {
+  try {
+    const eventos = await pool.query('SELECT * FROM votaciones.eventos_votaciones');
+   if (eventos.rows.length === 0) {
+      return res.status(404).json({ message: "No se encontro" });
+    }
+    return res.status(200).json(eventos.rows);
+  } catch (error) {
+    console.error('❌ Error al obtener eventos:', error);
+    res.status(500).json({ message: 'Error al obtener eventos', error: error.message });
+  }
+}
+
+async function registerEventos(req, res) {
+  try {
+    const{detalle_del_evento,fecha_ini,fecha_fin}=req.body;
+    if (!detalle_del_evento || !fecha_ini || !fecha_fin) {
+      return res.status(500).json({ message: "Faltan parametros" });
+
+    }
+    console.log("datos que llegan del post ",req.body)
+    const eventos = await pool.query(`insert into votaciones.eventos_votaciones (detalle_del_evento,fecha_ini,fecha_fin) 
+values ('${detalle_del_evento}','${fecha_ini}','${fecha_fin}')`);
+ 
+    return res.status(200).json(message = "Evento registrado correctamente");
+  } catch (error) {
+    console.error('❌ Error al obtener eventos:', error);
+    res.status(500).json({ message: 'Error al obtener eventos', error: error.message });
+  }
+}
+module.exports = { createVote, getVotes,searchStudent,createCandidate,searchCandidate,grafVotes,removeCandidate,saveImage,saerchidstudent,getEventos,registerEventos };

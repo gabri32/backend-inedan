@@ -21,7 +21,7 @@ const Candidates = sequelize.define('Candidate', {
     unique:true
   },
   foto: {
-    type: DataTypes.BLOB("long") // Guardar imagen como BLOB largo
+    type: DataTypes.BLOB("long") 
   },
 lema:{
   type:DataTypes.STRING,

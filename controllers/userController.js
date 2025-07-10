@@ -6,18 +6,20 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { where } = require('sequelize');
 require('dotenv').config();
+const pool = require('../db');
 
 
 
 async function createUser(req, res) {
   try {
-    const { nombre, contraseña, correo, rol_id, num_identificacion } = req.body;
-    console.log({ nombre })
-    if (!nombre || !contraseña) {
+    console.log(req.body)
+    const { nombre, contrasena, correo, rol_id, num_identificacion } = req.body.data;
+    console.log( contrasena )
+    if (!nombre || !contrasena) {
       return res.status(400).json({ message: 'Username y password son requeridos' });
     }
 
-    const hashedPassword = await bcrypt.hash(contraseña, 10);
+    const hashedPassword = await bcrypt.hash(contrasena, 10);
 
     const newUser = await User.create({ nombre, correo, contraseña: hashedPassword, rol_id, num_identificacion });
     res.status(201).json({ message: 'Usuario creado', user: newUser });
@@ -215,4 +217,16 @@ async function deletePropierties(req, res) {
     console.log(error)
   }
 }
-module.exports = { createUser, getUsers, login, gettypes, createproperty, getPropertiesC, getPropertiesD, updatePropierties,deletePropierties,bulkCreateUser };
+async function roles(req, res) {
+  try {
+    const roles = await pool.query(`select * from seguridad.roles`);
+    if (roles.rows.length === 0) {
+      return res.status(404).json({ message: "No se encontro" });
+    }
+    return res.status(200).json(roles.rows);
+  } catch (error) {
+    console.error("Error:", error);
+    return res.status(500).json({ error: "Error en el servidor" });
+  }
+}   
+module.exports = { createUser, getUsers, login, gettypes, createproperty, getPropertiesC, getPropertiesD, updatePropierties,deletePropierties,bulkCreateUser,roles };

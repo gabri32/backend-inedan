@@ -5,7 +5,30 @@ const Sede = require('../models/sede');
 const Curso = require('../models/Curso');
 const Asignatura = require('../models/Asignatura');
 const pool = require('../db');
+const multer = require('multer');
+const path = require('path');
 
+// Configuración del almacenamiento
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/'); // Carpeta donde se guardan los archivos
+  },
+  filename: (req, file, cb) => {
+    const uniqueName = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueName + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({
+  storage,
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === 'application/pdf') {
+      cb(null, true);
+    } else {
+      cb(new Error('Solo se permiten archivos PDF'));
+    }
+  }
+});
 async function estudiantesAgrupados(req, res) {
   try {
     const result = await pool.query(`
