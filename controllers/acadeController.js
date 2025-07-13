@@ -749,7 +749,19 @@ async function obtenerTalleresPorAsignatura(req, res) {
     res.status(500).json({ message: 'Error al obtener talleres' });
   }
 };
+async function getInscritos(req,res){
+  try{
+        const resultado = await pool.query(
+      `SELECT * FROM academico.inscripciones`
+    );
+      const inscritos = resultado.rows;
+    res.status(200).json(inscritos);
 
+  }catch(error){
+    console.error(error)
+    throw error;
+  }
+}
 module.exports = {
   creationStudent,
   createProfesor,
@@ -771,5 +783,6 @@ module.exports = {
   gettotalcursos,
   actualizarEstudiantesAsignados,
   consultarEstudianteCursoAsignaturas,
-  obtenerTalleresPorAsignatura
+  obtenerTalleresPorAsignatura,
+  getInscritos
 };
