@@ -51,7 +51,8 @@ app.use('/api', userRoutes);
 app.use('/api', voteRoutes);
 app.use('/api', incripcionRoutes);
 
-app.use('/uploads', express.static('uploads'));
+// ❗ Esto es lo correcto
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 const Curso = require('./models/Curso');
 const Asignatura = require('./models/Asignatura');
 

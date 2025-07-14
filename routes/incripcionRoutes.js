@@ -4,8 +4,11 @@ const pool = require('../db');
 const { getInscritos } = require('../controllers/acadeController');
 const upload = require('../config/multer.js');
 
-// Función para limpiar ruta y quedarnos con 'uploads/inscripciones/...'
-const extraerRuta = (archivo) => archivo?.path?.replace(/^.*uploads[\\/]/, 'uploads/inscripciones/');
+const extraerRuta = (archivo) => {
+  return archivo?.path?.replace(/^.*uploads[\\/]/, 'uploads/').replace(/\\/g, '/');
+};
+
+
 
 router.post(
   '/registro',
