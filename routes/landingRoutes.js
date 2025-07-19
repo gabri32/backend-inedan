@@ -1,7 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const { getLandingSections } = require('../controllers/landingController');
+const multer = require('multer');
+const upload = multer(); 
 
-router.get('/', getLandingSections);
+const { getLandingSectionsHeader,insertHeaders } = require('../controllers/landingController');
+
+router.get('/getheaders', getLandingSectionsHeader);
+router.post('/insertHeader', upload.single('image'), insertHeaders);
 
 module.exports = router;
