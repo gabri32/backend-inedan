@@ -61,12 +61,13 @@ async function insertHeaders(req, res) {
 
 async function insertEventos(req, res) {
   try {
-    const { detalle } = req.body;
+    const { titulo,detalle } = req.body;
     if (!req.file) {
       return res.status(400).json({ message: "No se subió ningún archivo" });
     }
 
     const nuevoHeader = await eventos.create({
+      titulo,
       detalle,
       imagen: req.file.buffer, 
     });

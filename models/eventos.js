@@ -8,6 +8,7 @@ const eventos=sequelize.define('eventos', {
           autoIncrement: true
     },
     detalle: DataTypes.TEXT,
+        titulo: DataTypes.TEXT,
     imagen: DataTypes.BLOB, 
   }, {
     tableName: 'eventos',
