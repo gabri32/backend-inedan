@@ -237,7 +237,7 @@ async function createCurses(req, res) {
           });
 
           console.log(`Curso creado: ${nuevoCurso.nombre}`);
-          await crearAsignaturas(nuevoCurso.id, tipoGrado + 1);
+          await crearAsignaturas(nuevoCurso.id, tipoGrado );
         } else {
           console.log(`Curso ya existe: ${nombreCurso}`);
         }
@@ -245,11 +245,11 @@ async function createCurses(req, res) {
 
       if (cantidad > 38) {
         for (let i = 1; i <= 2; i++) {
-          const nombreCurso = `Curso ${grado-1}-${i} - ${sede}`;
+          const nombreCurso = `Curso ${grado}-${i} - ${sede}`;
           await crearCursoSiNoExiste(nombreCurso, Math.ceil(cantidad / 2));
         }
       } else {
-        const nombreCurso = `Curso ${grado-1}- ${sede}`;
+        const nombreCurso = `Curso ${grado}- ${sede}`;
         await crearCursoSiNoExiste(nombreCurso, cantidad);
       }
     }
@@ -690,13 +690,14 @@ async function consultarEstudianteCursoAsignaturas(req, res) {
 
     const estudiante = estudianteResult.rows[0];
     const gradoEstudiante = estudiante.grado;
-
+    const sede=estudiante.id_sede;
+console.log(sede)
     // 2. Buscar cursos del grado del estudiante
     const cursosResult = await pool.query(
-      `SELECT * FROM academico.cursos WHERE tipo_grado = $1`,
-      [gradoEstudiante]
+      `SELECT * FROM academico.cursos WHERE tipo_grado = $1 and sede = $2`,
+      [gradoEstudiante,sede]
     );
-
+console.log(cursosResult.rowCount)
     if (cursosResult.rowCount === 0) {
       return res.status(404).json({ message: 'No hay cursos para este grado.' });
     }
