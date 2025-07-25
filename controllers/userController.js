@@ -12,9 +12,7 @@ const pool = require('../db');
 
 async function createUser(req, res) {
   try {
-    console.log(req.body)
     const { nombre, contrasena, correo, rol_id, num_identificacion } = req.body.data;
-    console.log( contrasena )
     if (!nombre || !contrasena) {
       return res.status(400).json({ message: 'Username y password son requeridos' });
     }
@@ -115,7 +113,7 @@ async function gettypes(req, res) {
     const types = await typebelongings.findAll()
     res.status(200).json({ message: 'exito', types: types });
   } catch (error) {
-    console.log(error)
+    console.error(error)
   }
 }
 
@@ -197,7 +195,7 @@ async function updatePropierties(req, res) {
 
     });
   } catch (error) {
-    console.log(error)
+    console.error(error)
   }
 }
 async function deletePropierties(req, res) {
@@ -214,7 +212,7 @@ async function deletePropierties(req, res) {
 
     });
   } catch (error) {
-    console.log(error)
+    console.error(error)
   }
 }
 async function roles(req, res) {

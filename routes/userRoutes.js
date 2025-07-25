@@ -15,7 +15,7 @@ const { creationStudent, createProfesor,
     getasignaturas, aditasignatura
 ,deletePropiertieasig,estudiantesAgrupados,createCurses ,getAsingDocente,createWorks,getTalleres,
 estudiantesPorgrado,gettotalcursos,actualizarEstudiantesAsignados,consultarEstudianteCursoAsignaturas
-,obtenerTalleresPorAsignatura} = require('../controllers/acadeController')
+,obtenerTalleresPorAsignatura,getdetailTaller,TallerPendiente,getTallerPendiente} = require('../controllers/acadeController')
 const { getsliderImages, updatesliderImages } = require('../controllers/manageController')
 // Configurar multer para almacenar la imagen en memoria (BLOB)
 const storage = multer.memoryStorage();
@@ -55,6 +55,8 @@ router.patch('/actualizarEstudiantesAsignados/:id', actualizarEstudiantesAsignad
 router.get('/consultarEstudianteCursoAsignaturas', consultarEstudianteCursoAsignaturas);
 router.get('/talleres/asignatura/:id', obtenerTalleresPorAsignatura);
 router.get('/roles', roles);
-
+router.get('/getdetailTaller/:id',getdetailTaller)
+router.post('/TallerPendiente',upload.single('archivo_pdf'),TallerPendiente)
+router.get('/getTallerPendiente/:id_taller/:num_identificacion', getTallerPendiente)
 module.exports = router;
     

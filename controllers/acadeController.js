@@ -4,6 +4,7 @@ const Admins = require('../models/admins');
 const Sede = require('../models/sede');
 const Curso = require('../models/Curso');
 const Asignatura = require('../models/Asignatura');
+const Taller = require('../models/talleres')
 const pool = require('../db');
 const multer = require('multer');
 const path = require('path');
@@ -215,7 +216,7 @@ async function createCurses(req, res) {
 
     for (const curso of cursos) {
       const { grado, sede, cantidad, nombresede } = curso;
-      const tipoGrado = grado ;
+      const tipoGrado = grado;
 
       const crearCursoSiNoExiste = async (nombreCurso, cantidadCurso) => {
         const existe = await Curso.findOne({
@@ -237,7 +238,7 @@ async function createCurses(req, res) {
           });
 
           console.log(`Curso creado: ${nuevoCurso.nombre}`);
-          await crearAsignaturas(nuevoCurso.id, tipoGrado );
+          await crearAsignaturas(nuevoCurso.id, tipoGrado);
         } else {
           console.log(`Curso ya existe: ${nombreCurso}`);
         }
@@ -510,10 +511,8 @@ async function deletePropiertiescurso(req, res) {
     if (!curso) {
       return res.status(404).json({ error: "Curso no encontrado" });
     }
-    console.log("Curso encontrado:", curso.id);
     curso.profesor_id = null
     if (sede) curso.sede = sede;
-    console.log("Curso actualizado:", curso);
     await curso.save();
     return res.status(200).json({ message: "Propiedad eliminada exitosamente" });
   } catch (error) {
@@ -570,7 +569,6 @@ async function getasignaturas(req, res) {
 async function getAsingDocente(req, res) {
   try {
     const { id } = req.query;
-    console.log("ID del profesor:", id);
     const result = await pool.query(`SELECT se.detalle, asg.* ,cu.nombre
 FROM academico.asignaturas AS asg
 JOIN academico.profesores AS pro ON asg.id_profesor = pro.id_profesor
@@ -640,8 +638,7 @@ async function getTalleres(req, res) {
 
 async function estudiantesPorgrado(req, res) {
   try {
-    console.log(req.query);
-    const { grado, sede,id } = req.query;
+    const { grado, sede, id } = req.query;
     const estudiantes = await pool.query(`select * from academico.estudiantes where grado = ${grado} and id_sede = ${sede}`);
     if (estudiantes.rows.length === 0) {
       return res.status(404).json({ message: "No se encontraron estudiantes para este grado" });
@@ -651,13 +648,11 @@ async function estudiantesPorgrado(req, res) {
     console.error("Error al obtener estudiantes por grado:", error);
     return res.status(500).json({ error: "Error en el servidor" });
   }
-}   
+}
 
 const actualizarEstudiantesAsignados = async (req, res) => {
   const cursoId = req.params.id;
   const { estudiantes } = req.body; // array de IDs
-console.log("Curso ID:", cursoId);
-  console.log("Estudiantes a asignar:", estudiantes);
   if (!Array.isArray(estudiantes)) {
     return res.status(400).json({ message: 'El cuerpo debe contener un array de estudiantes.' });
   }
@@ -690,14 +685,12 @@ async function consultarEstudianteCursoAsignaturas(req, res) {
 
     const estudiante = estudianteResult.rows[0];
     const gradoEstudiante = estudiante.grado;
-    const sede=estudiante.id_sede;
-console.log(sede)
+    const sede = estudiante.id_sede;
     // 2. Buscar cursos del grado del estudiante
     const cursosResult = await pool.query(
       `SELECT * FROM academico.cursos WHERE tipo_grado = $1 and sede = $2`,
-      [gradoEstudiante,sede]
+      [gradoEstudiante, sede]
     );
-console.log(cursosResult.rowCount)
     if (cursosResult.rowCount === 0) {
       return res.status(404).json({ message: 'No hay cursos para este grado.' });
     }
@@ -750,17 +743,93 @@ async function obtenerTalleresPorAsignatura(req, res) {
     res.status(500).json({ message: 'Error al obtener talleres' });
   }
 };
-async function getInscritos(req,res){
-  try{
-        const resultado = await pool.query(
+async function getInscritos(req, res) {
+  try {
+    const { id } = req.params;
+
+    const resultado = await pool.query(
       `SELECT * FROM academico.inscripciones`
     );
-      const inscritos = resultado.rows;
+    const inscritos = resultado.rows;
     res.status(200).json(inscritos);
 
-  }catch(error){
+  } catch (error) {
     console.error(error)
     throw error;
+  }
+}
+
+async function getdetailTaller(req, res) {
+  try {
+    const { id } = req.params;
+    const resultado = await Taller.findByPk(id)
+    const taller = resultado;
+    res.status(200).json(taller);
+  } catch (error) {
+    console.error(error)
+    throw error;
+  }
+}
+
+
+async function TallerPendiente(req, res) {
+  try {
+    const { id_taller, observaciones, num_identificacion } = req.body;
+    const archivo = req.file;
+
+    if (!archivo) {
+      return res.status(400).json({ error: 'Archivo PDF requerido' });
+    }
+
+    const archivoBuffer = archivo.buffer;
+
+    // Verificar si ya existe
+    const existe = await pool.query(
+      `SELECT * FROM academico.talleres_pendientes WHERE id_taller = $1 AND num_identificacion = $2`,
+      [id_taller, num_identificacion]
+    );
+
+    if (existe.rowCount > 0) {
+      // Ya existe: hacer UPDATE
+      await pool.query(
+        `UPDATE academico.talleres_pendientes 
+         SET comentario_res = $1, doc = $2
+         WHERE id_taller = $3 AND num_identificacion = $4`,
+        [observaciones, archivoBuffer, id_taller, num_identificacion]
+      );
+
+      return res.status(200).json({ mensaje: 'Taller actualizado correctamente.' });
+    } else {
+      // No existe: hacer INSERT
+      await pool.query(
+        `INSERT INTO academico.talleres_pendientes (id_taller, num_identificacion, comentario_res, doc)
+         VALUES ($1, $2, $3, $4)`,
+        [id_taller, num_identificacion, observaciones, archivoBuffer]
+      );
+
+      return res.status(200).json({ mensaje: 'Taller enviado correctamente.' });
+    }
+
+  } catch (error) {
+    console.error('Error en TallerPendiente:', error);
+    return res.status(500).json({ error: 'Error al procesar el taller.' });
+  }
+}
+
+async function getTallerPendiente(req,res) {
+try {
+ const { id_taller, num_identificacion } = req.params;
+
+  const datos=  await pool.query(
+      `select * from academico.talleres_pendientes where id_taller=$1 and num_identificacion=$2`,
+      [id_taller, num_identificacion]
+    );
+const respuesta=datos.rows
+    res.status(200).json({respuesta});
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al guardar el taller' });
   }
 }
 module.exports = {
@@ -785,5 +854,8 @@ module.exports = {
   actualizarEstudiantesAsignados,
   consultarEstudianteCursoAsignaturas,
   obtenerTalleresPorAsignatura,
-  getInscritos
+  getInscritos,
+  getdetailTaller,
+  TallerPendiente,
+  getTallerPendiente
 };

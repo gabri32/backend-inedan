@@ -25,7 +25,6 @@ const getLandingEventos= async (req, res) => {
       SELECT * FROM landing.eventos
     `;
     const result = await pool.query(query);
-    console.log(result)
     const headers = result.rows.map(header => ({
       ...header,
       imagen: header.imagen ? `data:imagen/jpeg;base64,${header.imagen.toString('base64')}` : null
