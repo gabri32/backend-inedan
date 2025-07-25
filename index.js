@@ -55,6 +55,14 @@ app.use('/api', incripcionRoutes);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 const Curso = require('./models/Curso');
 const Asignatura = require('./models/Asignatura');
+const Taller = require('./models/talleres');
+const Tallerpendiente = require('./models/tallerPendiente');
+
+// Relación: Un Taller tiene muchas respuestas
+Taller.hasMany(Tallerpendiente, { foreignKey: 'id_taller' });
+
+// Relación: Una respuesta pertenece a un Taller
+Tallerpendiente.belongsTo(Taller, { foreignKey: 'id_taller' });
 
 // Asociaciones problemáticas aquí
 Asignatura.belongsTo(Curso, { foreignKey: 'id_grado', as: 'curso' });

@@ -8,7 +8,7 @@ const Taller = require('../models/talleres')
 const pool = require('../db');
 const multer = require('multer');
 const path = require('path');
-
+const Tallerpendiente=require(`../models/tallerPendiente`)
 // Configuración del almacenamiento
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -816,22 +816,79 @@ async function TallerPendiente(req, res) {
   }
 }
 
-async function getTallerPendiente(req,res) {
-try {
- const { id_taller, num_identificacion } = req.params;
+async function getTallerPendiente(req, res) {
+  try {
+    const { id_taller, num_identificacion } = req.params;
 
-  const datos=  await pool.query(
+    const datos = await pool.query(
       `select * from academico.talleres_pendientes where id_taller=$1 and num_identificacion=$2`,
       [id_taller, num_identificacion]
     );
-const respuesta=datos.rows
-    res.status(200).json({respuesta});
+    const respuesta = datos.rows
+    res.status(200).json({ respuesta });
 
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Error al guardar el taller' });
   }
 }
+async function updateTaller(req, res) {
+  try {
+    const { id } = req.params;
+    const taller = await Taller.findByPk(id);
+
+    if (!taller) {
+      return res.status(404).json({ error: 'Taller no encontrado' });
+    }
+    const {
+      detalle_taller,
+      periodo,
+      fecha_ini,
+      fecha_fin,
+      doc,
+      doc2
+    } = req.body;
+
+    // Actualizar solo los campos permitidos
+    taller.detalle_taller = detalle_taller ?? taller.detalle_taller;
+    taller.periodo = periodo ?? taller.periodo;
+    taller.fecha_ini = fecha_ini ?? taller.fecha_ini;
+    taller.fecha_fin = fecha_fin ?? taller.fecha_fin;
+    taller.doc = doc ?? taller.doc;
+    taller.doc2 = doc2 ?? taller.doc2;
+    await taller.save();
+
+    return res.status(200).json({ mensaje: 'Taller actualizado correctamente', taller });
+
+  } catch (error) {
+    console.error('Error al actualizar taller:', error);
+    return res.status(500).json({ error: 'Error del servidor al actualizar el taller' });
+  }
+}
+
+async function getRespuestasPorTaller(req, res) {
+  try {
+    const { id } = req.params;
+
+    const respuestas = await Tallerpendiente.findAll({
+      where: { id_taller: id },
+      include: [
+        {
+          model: Taller,
+          attributes: ['detalle_taller', 'periodo', 'competencia']
+        }
+      ]
+    });
+
+    res.status(200).json(respuestas);
+  } catch (error) {
+    console.error('Error al obtener respuestas del taller:', error);
+    res.status(500).json({ error: 'Error al obtener las respuestas' });
+  }
+}
+
+
+
 module.exports = {
   creationStudent,
   createProfesor,
@@ -857,5 +914,7 @@ module.exports = {
   getInscritos,
   getdetailTaller,
   TallerPendiente,
-  getTallerPendiente
+  getTallerPendiente,
+  updateTaller,
+  getRespuestasPorTaller
 };
