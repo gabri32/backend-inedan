@@ -8,7 +8,8 @@ const Taller = require('../models/talleres')
 const pool = require('../db');
 const multer = require('multer');
 const path = require('path');
-const Tallerpendiente=require(`../models/tallerPendiente`)
+const Tallerpendiente = require(`../models/tallerPendiente`);
+const { console } = require('inspector');
 // Configuración del almacenamiento
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -686,11 +687,18 @@ async function consultarEstudianteCursoAsignaturas(req, res) {
     const estudiante = estudianteResult.rows[0];
     const gradoEstudiante = estudiante.grado;
     const sede = estudiante.id_sede;
-    // 2. Buscar cursos del grado del estudiante
+    const id_estudiante = estudiante.id;
+
+    // Buscar cursos donde el id del estudiante esté en el array de estudiantes_asignados
     const cursosResult = await pool.query(
-      `SELECT * FROM academico.cursos WHERE tipo_grado = $1 and sede = $2`,
-      [gradoEstudiante, sede]
+      `SELECT * FROM academico.cursos 
+   WHERE tipo_grado = $1 
+     AND sede = $2 
+     AND estudiantes_asignados @> $3::jsonb`,
+      [gradoEstudiante, sede, JSON.stringify([id_estudiante])]
     );
+
+
     if (cursosResult.rowCount === 0) {
       return res.status(404).json({ message: 'No hay cursos para este grado.' });
     }
@@ -869,7 +877,6 @@ async function updateTaller(req, res) {
 async function getRespuestasPorTaller(req, res) {
   try {
     const { id } = req.params;
-
     const respuestas = await Tallerpendiente.findAll({
       where: { id_taller: id },
       include: [
@@ -880,12 +887,104 @@ async function getRespuestasPorTaller(req, res) {
       ]
     });
 
-    res.status(200).json(respuestas);
+    // 2. Obtener todos los id_pendiente
+    const idsPendientes = respuestas.map(r => r.id_pendientes);
+console.log(idsPendientes)
+    // 3. Consultar todas las notas de golpe (usamos IN)
+    const notas = await pool.query(
+      `SELECT * FROM academico.notas WHERE taller_id = ANY($1::int[])`,
+      [idsPendientes]
+    );
+console.log("datps",notas)
+    const notasMap = new Map();
+    notas.rows.forEach(nota => {
+      notasMap.set(nota.id_pendientes, nota); // clave
+    });
+
+    // 4. Enriquecer cada respuesta con su nota (si existe)
+    const respuestasConNotas = respuestas.map(r => {
+      const nota = notasMap.get(r.id);
+      return {
+        ...r.toJSON(), // convertir a JSON si viene como modelo Sequelize
+        nota: nota?.nota || null,
+        descripcion: nota?.descripcion || null
+      };
+    });
+
+    res.status(200).json(respuestasConNotas);
   } catch (error) {
     console.error('Error al obtener respuestas del taller:', error);
     res.status(500).json({ error: 'Error al obtener las respuestas' });
   }
 }
+
+
+async function insertNotafromTaller(req, res) {
+  try {
+    const { num_estudiantes, id_taller, descripcion, nota } = req.body;
+
+    // Validación de datos
+    if (!num_estudiantes || !id_taller || nota === undefined) {
+      return res.status(400).json({ error: 'Faltan campos obligatorios.' });
+    }
+
+    if (nota < 0 || nota > 5) {
+      return res.status(400).json({ error: 'La nota debe estar entre 0 y 5.' });
+    }
+
+    // Buscar estudiante
+    const estudiante = await pool.query(
+      `SELECT * FROM academico.estudiantes WHERE num_identificacion = $1 LIMIT 1`,
+      [num_estudiantes]
+    );
+
+    if (estudiante.rows.length === 0) {
+      return res.status(404).json({ error: 'Estudiante no encontrado.' });
+    }
+
+    const id = estudiante.rows[0].id;
+
+    // Verificar existencia de nota
+    const notaExistente = await pool.query(
+      `SELECT * FROM academico.notas 
+       WHERE estudiante_id = $1 AND taller_id = $2 LIMIT 1`,
+      [id, id_taller]
+    );
+
+    if (notaExistente.rows.length > 0) {
+      // Actualizar nota
+      await pool.query(
+        `UPDATE academico.notas 
+         SET nota = $1, descripcion = $2 
+         WHERE estudiante_id = $3 AND taller_id = $4`,
+        [nota, descripcion || '', id, id_taller]
+      );
+    } else {
+      // Insertar nota
+      await pool.query(
+        `INSERT INTO academico.notas (estudiante_id, taller_id, nota, descripcion)
+         VALUES ($1, $2, $3, $4)`,
+        [id, id_taller, nota, descripcion || '']
+      );
+    }
+
+    // ✅ Actualizar "talleres_pendientes" → calificado = true
+    await pool.query(
+      `UPDATE academico.talleres_pendientes
+       SET calificado = true
+       WHERE id_pendientes = $1`,
+      [id_taller]
+    );
+
+    return res.status(200).json({ mensaje: 'Nota guardada y taller marcado como calificado.' });
+
+  } catch (error) {
+    console.error('Error:', error);
+    return res.status(500).json({ error: 'Error interno del servidor.' });
+  }
+}
+
+
 
 
 
@@ -916,5 +1015,6 @@ module.exports = {
   TallerPendiente,
   getTallerPendiente,
   updateTaller,
-  getRespuestasPorTaller
+  getRespuestasPorTaller,
+  insertNotafromTaller
 };
