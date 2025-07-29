@@ -889,13 +889,13 @@ async function getRespuestasPorTaller(req, res) {
 
     // 2. Obtener todos los id_pendiente
     const idsPendientes = respuestas.map(r => r.id_pendientes);
-console.log(idsPendientes)
+    console.log(idsPendientes)
     // 3. Consultar todas las notas de golpe (usamos IN)
     const notas = await pool.query(
       `SELECT * FROM academico.notas WHERE taller_id = ANY($1::int[])`,
       [idsPendientes]
     );
-console.log("datps",notas)
+    console.log("datps", notas)
     const notasMap = new Map();
     notas.rows.forEach(nota => {
       notasMap.set(nota.id_pendientes, nota); // clave
@@ -984,6 +984,35 @@ async function insertNotafromTaller(req, res) {
   }
 }
 
+async function notasPorEstudiantes(req, res) {
+  try {
+    const { id, num_identificacion } = req.params;
+
+    console.log("Entró a notasPorEstudiantes");
+    console.log("Parámetros recibidos:", id, num_identificacion);
+    const d = new Date();
+    const year = d.getFullYear();
+    const resultado = await pool.query(
+      `
+    SELECT ta.*, n.nota ,n.descripcion
+      FROM academico.asignaturas asi
+      JOIN academico.talleres ta ON asi.id_asignatura = ta.id_asignatura
+      JOIN academico.talleres_pendientes tp ON ta.id_taller = tp.id_taller
+      JOIN academico.notas n ON tp.id_pendientes = n.taller_id
+      JOIN academico.estudiantes e ON n.estudiante_id = e.id
+      WHERE asi.id_asignatura = $1 AND e.num_identificacion = $2 and ta.vigencia=$3
+      `,
+      [id, num_identificacion, year]
+    );
+
+    console.log("Resultado:", resultado.rows);
+
+    return res.status(200).json({ notas: resultado.rows });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Error interno del servidor.' });
+  }
+}
 
 
 
@@ -1016,5 +1045,6 @@ module.exports = {
   getTallerPendiente,
   updateTaller,
   getRespuestasPorTaller,
-  insertNotafromTaller
+  insertNotafromTaller,
+  notasPorEstudiantes
 };
