@@ -1013,6 +1013,57 @@ async function notasPorEstudiantes(req, res) {
     return res.status(500).json({ error: 'Error interno del servidor.' });
   }
 }
+const getNotasVistaDocente = async (req, res) => {
+  const { id_asignatura, id_curso } = req.body; // o req.query si GET
+
+  try {
+    // Consulta 1: Talleres de la asignatura
+    const talleresQuery = `
+      SELECT id_taller, detalle_taller
+      FROM academico.talleres
+      WHERE id_asignatura = $1;
+    `;
+    const talleresResult = await pool.query(talleresQuery, [id_asignatura]);
+
+    // Consulta 2: Estudiantes del curso (usando JSON array)
+    const estudiantesQuery = `
+      SELECT e.id AS estudiante_id, e.nombre, e.num_identificacion
+      FROM academico.estudiantes e
+      JOIN academico.cursos c ON c.id = $1
+      WHERE e.id = ANY (
+        SELECT jsonb_array_elements_text(c.estudiantes_asignados)::int
+        FROM academico.cursos c
+        WHERE c.id = $1
+      );
+    `;
+    const estudiantesResult = await pool.query(estudiantesQuery, [id_curso]);
+
+    // Consulta 3: Notas por taller y estudiante
+    const notasQuery = `
+      SELECT 
+        n.estudiante_id, 
+        t.id_taller,
+        t.detalle_taller,
+        n.nota
+      FROM academico.notas n
+      JOIN academico.talleres_pendientes tp ON n.taller_id = tp.id_pendientes
+      JOIN academico.talleres t ON tp.id_taller = t.id_taller
+      WHERE t.id_asignatura = $1;
+    `;
+    const notasResult = await pool.query(notasQuery, [id_asignatura]);
+
+    // Respuesta agrupada
+    res.status(200).json({
+      talleres: talleresResult.rows,
+      estudiantes: estudiantesResult.rows,
+      notas: notasResult.rows,
+    });
+
+  } catch (err) {
+    console.error("Error al obtener datos:", err);
+    res.status(500).json({ message: "Error interno del servidor" });
+  }
+};
 
 
 
@@ -1046,5 +1097,6 @@ module.exports = {
   updateTaller,
   getRespuestasPorTaller,
   insertNotafromTaller,
-  notasPorEstudiantes
+  notasPorEstudiantes,
+  getNotasVistaDocente
 };
