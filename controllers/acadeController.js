@@ -818,7 +818,7 @@ async function obtenerTalleresPorAsignatura(req, res) {
 
   try {
     const resultado = await pool.query(
-      `SELECT * FROM academico.talleres WHERE id_asignatura = $1 and tipo_taller != true `,
+      `SELECT * FROM academico.talleres WHERE id_asignatura = $1 AND tipo_taller IS NOT NULL AND tipo_taller <> true`,
       [id]
     );
 
