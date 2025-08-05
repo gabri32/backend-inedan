@@ -589,9 +589,28 @@ WHERE pro.num_identificacion = '${id}';
 }
 
 async function createWorks(req, res) {
-  const { detalle_taller, fecha_ini, fecha_fin, periodo, doc, doc2, vigencia, id_asignatura } = req.body;
+  const {
+    detalle_taller,
+    fecha_ini,
+    fecha_fin,
+    periodo,
+    doc,
+    doc2,
+    vigencia,
+    id_asignatura,
+    otro
+  } = req.body;
+console.log("📥 Datos recibidos:", req.body);
+
+  console.log("🟢 Iniciando createWorks...");
+  const client = await pool.connect();
+
   try {
-    const result = await pool.query(
+    await client.query("BEGIN");
+    console.log("✅ Conexión a la base de datos iniciada y transacción comenzada.");
+
+    // 1. Insertar en academico.talleres
+    const insertTaller = await client.query(
       `INSERT INTO academico.talleres (
         detalle_taller,
         id_asignatura,
@@ -601,15 +620,80 @@ async function createWorks(req, res) {
         vigencia,
         doc,
         doc2
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *;`,
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      RETURNING id_taller;`,
       [detalle_taller, id_asignatura, fecha_ini, fecha_fin, periodo, vigencia, doc, doc2]
     );
-    return res.status(201).json({ message: "Taller creado exitosamente", taller: result.rows[0] });
+
+    const id_taller = insertTaller.rows[0].id_taller;
+    console.log("🆗 Taller insertado con ID:", id_taller);
+
+    if (otro) {
+      console.log("📌 Campo 'otro' es TRUE, realizando procesos adicionales...");
+
+      // 2.1 Obtener estudiantes_asignados
+      const result = await client.query(
+        `SELECT tg.estudiantes_asignados
+         FROM academico.cursos tg
+         JOIN academico.asignaturas a ON tg.id_grado = a.id_grado
+         WHERE a.id_asignatura = $1;`,
+        [id_asignatura]
+      );
+
+      console.log("🔎 Resultado de estudiantes_asignados:", result.rows);
+
+      if (result.rows.length > 0) {
+        const estudiantesAsignados = result.rows[0].estudiantes_asignados;
+
+        if (Array.isArray(estudiantesAsignados) && estudiantesAsignados.length > 0) {
+          console.log("👥 Estudiantes asignados encontrados:", estudiantesAsignados);
+
+          // 2.2 SELECT estudiantes
+          const placeholders = estudiantesAsignados.map((_, i) => `$${i + 1}`).join(", ");
+          const estudiantes = await client.query(
+            `SELECT id_estudiante, numero_identificacion
+             FROM academico.estudiantes
+             WHERE id_estudiante IN (${placeholders});`,
+            estudiantesAsignados
+          );
+
+          console.log("🎓 Estudiantes obtenidos:", estudiantes.rows);
+
+          // 2.3 INSERT en talleres_pendientes
+          for (const est of estudiantes.rows) {
+            await client.query(
+              `INSERT INTO academico.talleres_pendientes (id_taller, numero_identificacion)
+               VALUES ($1, $2);`,
+              [id_taller, est.numero_identificacion]
+            );
+            console.log(`➕ Insertado en talleres_pendientes: taller=${id_taller}, estudiante=${est.numero_identificacion}`);
+          }
+        } else {
+          console.log("⚠️ estudiantes_asignados no es un array válido o está vacío.");
+        }
+      } else {
+        console.log("⚠️ No se encontraron resultados en el SELECT de cursos/asignaturas.");
+      }
+    }
+
+    await client.query("COMMIT");
+    console.log("✅ Transacción completada exitosamente.");
+    return res.status(201).json({
+      message: "Taller creado exitosamente",
+      id_taller
+    });
+
   } catch (error) {
-    console.error("Error al crear trabajos:", error);
+    await client.query("ROLLBACK");
+    console.error("❌ Error en createWorks:", error);
     return res.status(500).json({ error: "Error en el servidor" });
+  } finally {
+    client.release();
+    console.log("🔚 Conexión liberada.");
   }
 }
+
+
 async function gettotalcursos(req, res) {
   try {
     const cursos = await pool.query(`
@@ -1014,16 +1098,16 @@ async function notasPorEstudiantes(req, res) {
   }
 }
 const getNotasVistaDocente = async (req, res) => {
-  const { id_asignatura, id_curso } = req.body; // o req.query si GET
+  const { id_asignatura, id_curso,periodo } = req.body; // o req.query si GET
 
   try {
     // Consulta 1: Talleres de la asignatura
     const talleresQuery = `
-      SELECT id_taller, detalle_taller
+      SELECT id_taller, detalle_taller,periodo,vigencia
       FROM academico.talleres
-      WHERE id_asignatura = $1;
+      WHERE id_asignatura = $1 and periodo=$2;
     `;
-    const talleresResult = await pool.query(talleresQuery, [id_asignatura]);
+    const talleresResult = await pool.query(talleresQuery, [id_asignatura,periodo]);
 
     // Consulta 2: Estudiantes del curso (usando JSON array)
     const estudiantesQuery = `
