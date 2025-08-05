@@ -600,18 +600,17 @@ async function createWorks(req, res) {
     id_asignatura,
     otro
   } = req.body;
-console.log("📥 Datos recibidos:", req.body);
 
-  console.log("🟢 Iniciando createWorks...");
+  console.log("📥 Datos recibidos:", req.body);
   const client = await pool.connect();
 
   try {
     await client.query("BEGIN");
-    console.log("✅ Conexión a la base de datos iniciada y transacción comenzada.");
+    console.log("✅ Transacción iniciada.");
 
-    // 1. Insertar en academico.talleres
-    const insertTaller = await client.query(
-      `INSERT INTO academico.talleres (
+    // 👉 1. Insertar taller
+    const insertTallerQuery = `
+      INSERT INTO academico.talleres (
         detalle_taller,
         id_asignatura,
         fecha_ini,
@@ -619,65 +618,72 @@ console.log("📥 Datos recibidos:", req.body);
         periodo,
         vigencia,
         doc,
-        doc2
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-      RETURNING id_taller;`,
-      [detalle_taller, id_asignatura, fecha_ini, fecha_fin, periodo, vigencia, doc, doc2]
-    );
+        doc2,
+        tipo_taller
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8,$9)
+      RETURNING id_taller;
+    `;
+    const insertTallerValues = [detalle_taller, id_asignatura, fecha_ini, fecha_fin, periodo, vigencia, doc, doc2,otro];
 
+    const insertTaller = await client.query(insertTallerQuery, insertTallerValues);
     const id_taller = insertTaller.rows[0].id_taller;
+
     console.log("🆗 Taller insertado con ID:", id_taller);
 
+    // 👉 2. Si se especificó 'otro', procesar estudiantes asignados
     if (otro) {
-      console.log("📌 Campo 'otro' es TRUE, realizando procesos adicionales...");
+      console.log("📌 Campo 'otro' es TRUE. Buscando estudiantes asignados...");
 
-      // 2.1 Obtener estudiantes_asignados
-      const result = await client.query(
-        `SELECT tg.estudiantes_asignados
-         FROM academico.cursos tg
-         JOIN academico.asignaturas a ON tg.id_grado = a.id_grado
-         WHERE a.id_asignatura = $1;`,
-        [id_asignatura]
-      );
-
-      console.log("🔎 Resultado de estudiantes_asignados:", result.rows);
+      const estudiantesQuery = `
+        SELECT tg.estudiantes_asignados
+        FROM academico.cursos tg
+        JOIN academico.asignaturas a ON tg.id = a.id_grado
+        WHERE a.id_asignatura = $1;
+      `;
+      const result = await client.query(estudiantesQuery, [id_asignatura]);
 
       if (result.rows.length > 0) {
         const estudiantesAsignados = result.rows[0].estudiantes_asignados;
 
         if (Array.isArray(estudiantesAsignados) && estudiantesAsignados.length > 0) {
-          console.log("👥 Estudiantes asignados encontrados:", estudiantesAsignados);
+          console.log("👥 Estudiantes asignados:", estudiantesAsignados);
 
-          // 2.2 SELECT estudiantes
+          // Obtener datos de los estudiantes
           const placeholders = estudiantesAsignados.map((_, i) => `$${i + 1}`).join(", ");
-          const estudiantes = await client.query(
-            `SELECT id_estudiante, numero_identificacion
-             FROM academico.estudiantes
-             WHERE id_estudiante IN (${placeholders});`,
-            estudiantesAsignados
-          );
+          console.log("placeholders",placeholders)
 
-          console.log("🎓 Estudiantes obtenidos:", estudiantes.rows);
 
-          // 2.3 INSERT en talleres_pendientes
-          for (const est of estudiantes.rows) {
+  const estudiantesQuery = `
+    SELECT id, num_identificacion
+    FROM academico.estudiantes
+    WHERE id IN (${placeholders});
+  `;
+
+
+  const estudiantesResult = await client.query(estudiantesQuery, estudiantesAsignados);
+  console.log("🎓 Estudiantes obtenidos:", estudiantesResult.rows);
+          // Insertar en talleres_pendientes
+          for (const est of estudiantesResult.rows) {
             await client.query(
-              `INSERT INTO academico.talleres_pendientes (id_taller, numero_identificacion)
+              `INSERT INTO academico.talleres_pendientes (id_taller, num_identificacion)
                VALUES ($1, $2);`,
-              [id_taller, est.numero_identificacion]
+              [id_taller, est.num_identificacion]
             );
-            console.log(`➕ Insertado en talleres_pendientes: taller=${id_taller}, estudiante=${est.numero_identificacion}`);
+            console.log(`➕ Pendiente añadido: estudiante=${est.num_identificacion}`);
           }
+
         } else {
-          console.log("⚠️ estudiantes_asignados no es un array válido o está vacío.");
+          console.log("⚠️ La lista de estudiantes asignados está vacía o no es válida.");
         }
+
       } else {
-        console.log("⚠️ No se encontraron resultados en el SELECT de cursos/asignaturas.");
+        console.log("⚠️ No se encontraron estudiantes asignados para la asignatura.");
       }
     }
 
     await client.query("COMMIT");
-    console.log("✅ Transacción completada exitosamente.");
+    console.log("✅ Taller y pendientes creados correctamente.");
+
     return res.status(201).json({
       message: "Taller creado exitosamente",
       id_taller
@@ -686,12 +692,13 @@ console.log("📥 Datos recibidos:", req.body);
   } catch (error) {
     await client.query("ROLLBACK");
     console.error("❌ Error en createWorks:", error);
-    return res.status(500).json({ error: "Error en el servidor" });
+    return res.status(500).json({ error: "Error al crear el taller" });
   } finally {
     client.release();
     console.log("🔚 Conexión liberada.");
   }
 }
+
 
 
 async function gettotalcursos(req, res) {
@@ -811,7 +818,7 @@ async function obtenerTalleresPorAsignatura(req, res) {
 
   try {
     const resultado = await pool.query(
-      `SELECT * FROM academico.talleres WHERE id_asignatura = $1`,
+      `SELECT * FROM academico.talleres WHERE id_asignatura = $1 and `,
       [id]
     );
 
