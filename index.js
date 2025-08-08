@@ -57,7 +57,7 @@ const Curso = require('./models/Curso');
 const Asignatura = require('./models/Asignatura');
 const Taller = require('./models/talleres');
 const Tallerpendiente = require('./models/tallerPendiente');
-
+const students = require('./models/students')
 // Relación: Un Taller tiene muchas respuestas
 Taller.hasMany(Tallerpendiente, { foreignKey: 'id_taller' });
 
@@ -66,7 +66,10 @@ Tallerpendiente.belongsTo(Taller, { foreignKey: 'id_taller' });
 
 // Asociaciones problemáticas aquí
 Asignatura.belongsTo(Curso, { foreignKey: 'id_grado', as: 'curso' });
-
+Tallerpendiente.belongsTo(students, {
+  foreignKey: 'num_identificacion',
+  as: 'estudiante'
+});
 app.listen(port, () => {
   console.log(`✅ Servidor corriendo en http://localhost:${port}`);
 });

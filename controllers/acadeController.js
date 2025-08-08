@@ -598,7 +598,8 @@ async function createWorks(req, res) {
     doc2,
     vigencia,
     id_asignatura,
-    otro
+    otro,
+    competencia
   } = req.body;
 
   console.log("📥 Datos recibidos:", req.body);
@@ -619,11 +620,12 @@ async function createWorks(req, res) {
         vigencia,
         doc,
         doc2,
-        tipo_taller
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8,$9)
+        tipo_taller,
+        competencia
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8,$9,$10)
       RETURNING id_taller;
     `;
-    const insertTallerValues = [detalle_taller, id_asignatura, fecha_ini, fecha_fin, periodo, vigencia, doc, doc2,otro];
+    const insertTallerValues = [detalle_taller, id_asignatura, fecha_ini, fecha_fin, periodo, vigencia, doc, doc2, otro, competencia];
 
     const insertTaller = await client.query(insertTallerQuery, insertTallerValues);
     const id_taller = insertTaller.rows[0].id_taller;
@@ -650,18 +652,18 @@ async function createWorks(req, res) {
 
           // Obtener datos de los estudiantes
           const placeholders = estudiantesAsignados.map((_, i) => `$${i + 1}`).join(", ");
-          console.log("placeholders",placeholders)
+          console.log("placeholders", placeholders)
 
 
-  const estudiantesQuery = `
+          const estudiantesQuery = `
     SELECT id, num_identificacion
     FROM academico.estudiantes
     WHERE id IN (${placeholders});
   `;
 
 
-  const estudiantesResult = await client.query(estudiantesQuery, estudiantesAsignados);
-  console.log("🎓 Estudiantes obtenidos:", estudiantesResult.rows);
+          const estudiantesResult = await client.query(estudiantesQuery, estudiantesAsignados);
+          console.log("🎓 Estudiantes obtenidos:", estudiantesResult.rows);
           // Insertar en talleres_pendientes
           for (const est of estudiantesResult.rows) {
             await client.query(
@@ -968,39 +970,51 @@ async function updateTaller(req, res) {
 async function getRespuestasPorTaller(req, res) {
   try {
     const { id } = req.params;
+
+    // 1. Buscar respuestas al taller
     const respuestas = await Tallerpendiente.findAll({
       where: { id_taller: id },
       include: [
         {
           model: Taller,
           attributes: ['detalle_taller', 'periodo', 'competencia']
-        }
+        },
       ]
     });
 
-    // 2. Obtener todos los id_pendiente
+    // 2. Obtener todos los id_pendientes
     const idsPendientes = respuestas.map(r => r.id_pendientes);
-    console.log(idsPendientes)
-    // 3. Consultar todas las notas de golpe (usamos IN)
+
+    // 3. Obtener notas relacionadas
     const notas = await pool.query(
       `SELECT * FROM academico.notas WHERE taller_id = ANY($1::int[])`,
       [idsPendientes]
     );
-    console.log("datps", notas)
     const notasMap = new Map();
     notas.rows.forEach(nota => {
-      notasMap.set(nota.id_pendientes, nota); // clave
+      notasMap.set(nota.taller_id, nota); // clave por taller_id, no id_pendientes
     });
 
-    // 4. Enriquecer cada respuesta con su nota (si existe)
-    const respuestasConNotas = respuestas.map(r => {
-      const nota = notasMap.get(r.id);
-      return {
-        ...r.toJSON(), // convertir a JSON si viene como modelo Sequelize
+    // 4. Enriquecer respuestas con nota y nombre del estudiante
+    const respuestasConNotas = [];
+    for (const r of respuestas) {
+      const json = r.toJSON();
+      const nota = notasMap.get(json.id_pendientes);
+
+      // Obtener nombre del estudiante por identificación
+      const resultado = await pool.query(
+        `SELECT nombre FROM academico.estudiantes WHERE num_identificacion = $1`,
+        [json.num_identificacion]
+      );
+      const nombre = resultado.rows[0]?.nombre || null;
+
+      respuestasConNotas.push({
+        ...json,
         nota: nota?.nota || null,
-        descripcion: nota?.descripcion || null
-      };
-    });
+        descripcion: nota?.descripcion || null,
+        nombre_estudiante: nombre
+      });
+    }
 
     res.status(200).json(respuestasConNotas);
   } catch (error) {
@@ -1008,6 +1022,7 @@ async function getRespuestasPorTaller(req, res) {
     res.status(500).json({ error: 'Error al obtener las respuestas' });
   }
 }
+
 
 
 async function insertNotafromTaller(req, res) {
@@ -1105,7 +1120,7 @@ async function notasPorEstudiantes(req, res) {
   }
 }
 const getNotasVistaDocente = async (req, res) => {
-  const { id_asignatura, id_curso,periodo } = req.body; // o req.query si GET
+  const { id_asignatura, id_curso, periodo } = req.body;
 
   try {
     // Consulta 1: Talleres de la asignatura
@@ -1114,7 +1129,7 @@ const getNotasVistaDocente = async (req, res) => {
       FROM academico.talleres
       WHERE id_asignatura = $1 and periodo=$2;
     `;
-    const talleresResult = await pool.query(talleresQuery, [id_asignatura,periodo]);
+    const talleresResult = await pool.query(talleresQuery, [id_asignatura, periodo]);
 
     // Consulta 2: Estudiantes del curso (usando JSON array)
     const estudiantesQuery = `
