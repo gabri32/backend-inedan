@@ -10,7 +10,7 @@ const multer = require('multer');
 async function searchStudent(req, res) {
   try {
     const studentsList = await students.findAll({
-      where: { grado: [11, 12] },
+      where: { grado: [11, 10] },
       order: [["grado", "ASC"]], // Ordena en orden ascendente por grado
     });
     return res.status(200).json({ students: studentsList });
