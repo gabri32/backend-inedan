@@ -39,14 +39,14 @@ async function createUser(req, res) {
         correo
       });
     } else if (rol_id === 2) {
-      await Students.create({
+      await students.create({
         nombre,
         edad,   // debe venir en el req.body.data
         grado,  // debe venir en el req.body.data
         num_identificacion
       });
     } else if (rol_id === 1) {
-      await Profesor.create({
+      await Profesors.create({
         nombre,
         especialidad, // debe venir en req.body.data
         vigencia: vigencia ?? true, // si no lo mandan, lo pongo en true por defecto
