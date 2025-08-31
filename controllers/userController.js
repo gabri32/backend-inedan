@@ -13,19 +13,56 @@ const Admins = require('../models/admins');
 
 async function createUser(req, res) {
   try {
-    const { nombre, contrasena, correo, rol_id, num_identificacion } = req.body.data;
+    const { nombre, contrasena, correo, rol_id, num_identificacion, edad, grado, especialidad, vigencia, sede } = req.body.data;
+
     if (!nombre || !contrasena) {
       return res.status(400).json({ message: 'Username y password son requeridos' });
     }
 
+    // 🔒 Hashear contraseña
     const hashedPassword = await bcrypt.hash(contrasena, 10);
 
-    const newUser = await User.create({ nombre, correo, contraseña: hashedPassword, rol_id, num_identificacion });
-    res.status(201).json({ message: 'Usuario creado', user: newUser });
+    // 👤 Crear usuario en la tabla principal
+    const newUser = await User.create({
+      nombre,
+      correo,
+      contraseña: hashedPassword,
+      rol_id,
+      num_identificacion
+    });
+
+    // 📌 Insertar en tabla según el rol
+    if (rol_id === 3) {
+      await Admins.create({
+        nombre_completo: nombre,
+        num_identificacion,
+        correo
+      });
+    } else if (rol_id === 2) {
+      await Students.create({
+        nombre,
+        edad,   // debe venir en el req.body.data
+        grado,  // debe venir en el req.body.data
+        num_identificacion
+      });
+    } else if (rol_id === 1) {
+      await Profesor.create({
+        nombre,
+        especialidad, // debe venir en req.body.data
+        vigencia: vigencia ?? true, // si no lo mandan, lo pongo en true por defecto
+        sede, // id de la sede
+        num_identificacion
+      });
+    }
+
+    res.status(201).json({ message: 'Usuario creado con éxito', user: newUser });
+
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: 'Error al crear usuario', error });
   }
 }
+
 
 async function bulkCreateUser(req, res) {
   try {
