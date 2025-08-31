@@ -125,7 +125,30 @@ try {
   console.error('error', error)
 }};
 
-
+async function inactivarTodosCandidatos(req, res) {
+  try {
+    await Candidate.update(
+      { activo: false },
+      { where: { activo: true } }
+    );
+    res.status(200).json({ message: "Todos los candidatos han sido inactivados." });
+  } catch (error) {
+    console.error("Error al inactivar candidatos:", error);
+    res.status(500).json({ error: "Error al inactivar candidatos" });
+  }
+}
+async function activarTodosCandidatos(req, res) {
+  try {
+    await Candidate.update(
+      { activo: true },
+      { where: { activo: false } }
+    );
+    res.status(200).json({ message: "Todos los candidatos han sido activados." });
+  } catch (error) {
+    console.error("Error al activar candidatos:", error);
+    res.status(500).json({ error: "Error al activar candidatos" });
+  }
+}
 //funcion que busca los candidatos
 async function searchCandidate(req, res) {
   try {
@@ -261,4 +284,4 @@ values ('${detalle_del_evento}','${fecha_ini}','${fecha_fin}')`);
     res.status(500).json({ message: 'Error al obtener eventos', error: error.message });
   }
 }
-module.exports = { createVote, getVotes,searchStudent,createCandidate,searchCandidate,grafVotes,removeCandidate,saveImage,saerchidstudent,getEventos,registerEventos };
+module.exports = { activarTodosCandidatos,inactivarTodosCandidatos,createVote, getVotes,searchStudent,createCandidate,searchCandidate,grafVotes,removeCandidate,saveImage,saerchidstudent,getEventos,registerEventos };
