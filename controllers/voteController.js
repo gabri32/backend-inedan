@@ -129,7 +129,10 @@ try {
 //funcion que busca los candidatos
 async function searchCandidate(req, res) {
   try {
-    const candidatesList = await Candidate.findAll();
+    const candidatesList = await Candidate.findAll({
+      where: { activo: true },
+      order: [["numero", "ASC"]], 
+    });
 
     const candidatesWithImages = candidatesList.map(candidate => {
       return {

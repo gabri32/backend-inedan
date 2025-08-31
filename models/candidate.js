@@ -30,6 +30,10 @@ lema:{
 numero:{
   type:DataTypes.INTEGER,
   allowNull:true
+  },
+  activo:{
+    type:DataTypes.BOOLEAN,
+    defaultValue:true
   }
   ,
 }, {
