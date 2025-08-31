@@ -7,7 +7,8 @@ const jwt = require('jsonwebtoken');
 const { where } = require('sequelize');
 require('dotenv').config();
 const pool = require('../db');
-
+const Profesors = require('../models/profesors');
+const Admins = require('../models/admins');
 
 
 async function createUser(req, res) {
