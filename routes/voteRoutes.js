@@ -1,5 +1,5 @@
 const express = require('express');
-const { createVote, getVotes ,searchStudent,createCandidate,searchCandidate,grafVotes,removeCandidate,saveImage,
+const { activarTodosCandidatos,inactivarTodosCandidatos,createVote, getVotes ,searchStudent,createCandidate,searchCandidate,grafVotes,removeCandidate,saveImage,
     saerchidstudent,getEventos,registerEventos} = require('../controllers/voteController');
 const multer = require("multer");
 
@@ -20,4 +20,6 @@ router.post("/saveImage", upload.single("image"), saveImage);
 router.post("/saerchidstudent",saerchidstudent)
 router.get('/getEventos', getEventos);
 router.post('/registerEventos', registerEventos);
+router.post('/candidatos/inactivar', inactivarTodosCandidatos);
+router.post('/candidatos/activar', activarTodosCandidatos);
 module.exports = router;
