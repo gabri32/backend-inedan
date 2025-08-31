@@ -17,22 +17,22 @@ const allowedOrigins = [
   "https://antonio-narino.netlify.app"
 ];
 
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
-    res.header("Access-Control-Allow-Origin", origin);
-  }
-
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS,PATCH");
-  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(200); // Manejo del preflight request
-  }
-  
-  next();
-});
-
+const corsOptions = {
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+      "http://localhost:4200",
+      "https://antonio-narino.netlify.app"
+    ];
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("No permitido por CORS"));
+    }
+  },
+  methods: "GET,POST,PUT,DELETE,OPTIONS,PATCH",
+  allowedHeaders: "Content-Type,Authorization"
+};
+app.use(cors(corsOptions));
 app.use(bodyParser.json());
 
 
