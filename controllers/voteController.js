@@ -13,12 +13,32 @@ async function searchStudent(req, res) {
       where: { grado: [11, 10] },
       order: [["grado", "ASC"]], // Ordena en orden ascendente por grado
     });
-    return res.status(200).json({ students: studentsList });
+
+    const candidatos = await Candidate.findAll({});
+
+    // Creamos un nuevo array de estudiantes con un flag 'esCandidato'
+    const estudiantes_candidato = studentsList.map(student => {
+      const candidato = candidatos.find(c => c.num_identificacion === student.num_identificacion);
+      return {
+        ...student.dataValues,
+        esCandidato: !!candidato, // true si es candidato, false si no
+      };
+    });
+
+    // Ordenamos primero los candidatos, luego los demás
+    estudiantes_candidato.sort((a, b) => {
+      // Orden descendente: los candidatos (true) van antes que los que no lo son (false)
+      return (b.esCandidato - a.esCandidato);
+    });
+
+    return res.status(200).json({ students: estudiantes_candidato });
+
   } catch (error) {
     console.error("Error al buscar estudiantes:", error);
     return res.status(500).json({ error: "Error en el servidor" });
   }
 }
+
 
 
 //funcion que crea un voto
