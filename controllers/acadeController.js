@@ -8,6 +8,7 @@ const Taller = require('../models/talleres')
 const pool = require('../db');
 const multer = require('multer');
 const path = require('path');
+
 const Tallerpendiente = require(`../models/tallerPendiente`);
 const { console } = require('inspector');
 // Configuración del almacenamiento
@@ -587,6 +588,46 @@ WHERE pro.num_identificacion = '${id}';
     return res.status(500).json({ error: "Error en el servidor" });
   }
 }
+// controllers/reportes.controller.js
+
+/**
+ * GET /api/reportes/tipo-grado?tipo_grado=11&periodo=3
+ * Llama a la función SQL: academico.api_reporte_por_tipo_grado(p_tipo_grado text, p_periodo int)
+ */
+async function reportePorTipoGrado  (req, res) {
+const tipo_grado = String(req.query.tipo_grado ?? '').trim();
+  const periodo = Number(req.query.periodo);
+
+  console.log('[reportePorTipoGrado] params:', { tipo_grado, periodo });
+
+  if (!tipo_grado || Number.isNaN(periodo)) {
+    return res.status(400).json({ message: 'tipo_grado (texto) y periodo (número) son requeridos' });
+  }
+
+  const sql = 'SELECT academico.api_reporte_por_tipo_grado($1::text, $2::int) AS data';
+  const values = [tipo_grado, periodo];
+
+  try {
+    const { rows } = await pool.query(sql, values);
+
+    // pg normalmente parsea json/jsonb → objeto JS automáticamente.
+    // Por si acaso, manejamos ambos casos:
+    let payload = rows?.[0]?.data;
+    if (typeof payload === 'string') {
+      try { payload = JSON.parse(payload); } catch { /* deja tal cual */ }
+    }
+
+    // Respuesta por defecto si vino vacío
+    if (!payload) payload = { tipo_grado, periodo, total: 0, estudiantes: [] };
+
+    console.log('[reportePorTipoGrado] total estudiantes:', payload.total ?? 0);
+    return res.status(200).json(payload);
+  } catch (error) {
+    console.error('[reportePorTipoGrado] ERROR:', error);
+    return res.status(500).json({ message: 'Error generando el reporte', error: error?.message || String(error) });
+  }
+};
+
 
 async function createWorks(req, res) {
   const {
@@ -1204,5 +1245,6 @@ module.exports = {
   getRespuestasPorTaller,
   insertNotafromTaller,
   notasPorEstudiantes,
-  getNotasVistaDocente
+  getNotasVistaDocente,
+  reportePorTipoGrado
 };
