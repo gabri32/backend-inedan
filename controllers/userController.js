@@ -68,7 +68,8 @@ async function createUser(req, res) {
         nombre,
         edad,
         grado,
-        num_identificacion
+        num_identificacion,
+       id_sede:sede
       });
     } else if (rol === 1) {
       await Profesors.create({
