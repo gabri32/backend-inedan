@@ -11,117 +11,83 @@ const Profesors = require('../models/profesors');
 const Admins = require('../models/admins');
 
 
+
 async function createUser(req, res) {
-  console.time('createUser'); // ⏱️ medir tiempo
-  const payload = req.body?.data || {};
+  console.log('createUser', req.body);
+  const payload = req.body || {};
   const {
     nombre, contrasena, correo, rol_id,
     num_identificacion, edad, grado,
     especialidad, vigencia, sede
   } = payload;
 
-  // Logs de entrada (sin mostrar contraseña)
-  console.log('[createUser] Payload recibido:', {
-    nombre, correo, rol_id, num_identificacion, edad, grado, especialidad, vigencia, sede,
-    // NUNCA loguees la contraseña en claro
-  });
-
   try {
-    // Cast del rol a número por si llega como string desde Angular
     const rol = Number(rol_id);
-    console.log('[createUser] rol_id (raw):', rol_id, ' -> rol (Number):', rol, ' typeof raw:', typeof rol_id);
 
     // Validación base
     if (!nombre || !contrasena) {
-      console.warn('[createUser] Falta nombre o contraseña');
       return res.status(400).json({ message: 'Username y password son requeridos' });
     }
 
-    // Validación por rol (logs útiles para saber qué falta)
+    // Validación por rol
     if (rol === 2) { // Estudiante
       if (edad == null || grado == null || grado === '') {
-        console.warn('[createUser] Faltan campos de estudiante', { edad, grado });
         return res.status(400).json({ message: 'Para rol estudiante (2) se requieren edad y grado' });
       }
     } else if (rol === 1) { // Profesor
       if (!especialidad || sede == null) {
-        console.warn('[createUser] Faltan campos de profesor', { especialidad, sede });
         return res.status(400).json({ message: 'Para rol profesor (1) se requieren especialidad y sede' });
       }
     } else if (rol === 3) {
-      // Admin no requiere extra, pero lo dejamos anotado
-      console.log('[createUser] Rol admin (3) detectado, sin campos extra obligatorios');
+      // Admin no requiere campos extra
     } else {
-      console.warn('[createUser] Rol no reconocido:', rol);
       return res.status(400).json({ message: `Rol no reconocido: ${rol}` });
     }
 
-    // Iniciar transacción
-    const t = await sequelize.transaction();
-    try {
-      // Hash
-      const hashedPassword = await bcrypt.hash(contrasena, 10);
-      console.log('[createUser] Password hasheada correctamente');
+    // Hash de contraseña
+    const hashedPassword = await bcrypt.hash(contrasena, 10);
 
-      // Crear usuario base
-      const newUser = await User.create({
+    // Crear usuario base
+    const newUser = await User.create({
+      nombre,
+      correo,
+      contraseña: hashedPassword,
+      rol_id: rol,
+      num_identificacion
+    });
+
+    // Insert específico por rol
+    if (rol === 3) {
+      await Admins.create({
+        nombre_completo: nombre,
+        num_identificacion,
+        correo
+      });
+    } else if (rol === 2) {
+      await students.create({
         nombre,
-        correo,
-        contraseña: hashedPassword, // OJO con el nombre del campo en tu modelo
-        rol_id: rol,
+        edad,
+        grado,
         num_identificacion
-      }, { transaction: t });
-
-      console.log('[createUser] Usuario creado en User:', newUser?.toJSON?.() || newUser);
-
-      // Insert específico por rol
-      if (rol === 3) {
-        const admin = await Admins.create({
-          nombre_completo: nombre,
-          num_identificacion,
-          correo
-        }, { transaction: t });
-        console.log('[createUser] Administrativo creado:', admin?.toJSON?.() || admin);
-
-      } else if (rol === 2) {
-        const alumno = await Students.create({
-          nombre,
-          edad,
-          grado,
-          num_identificacion
-        }, { transaction: t });
-        console.log('[createUser] Estudiante creado:', alumno?.toJSON?.() || alumno);
-
-      } else if (rol === 1) {
-        const prof = await Profesors.create({
-          nombre,
-          especialidad,
-          vigencia: typeof vigencia === 'boolean' ? vigencia : true,
-          sede,
-          num_identificacion
-        }, { transaction: t });
-        console.log('[createUser] Profesor creado:', prof?.toJSON?.() || prof);
-      }
-
-      await t.commit();
-      console.log('[createUser] Transacción COMMIT');
-
-      console.timeEnd('createUser');
-      return res.status(201).json({ message: 'Usuario creado con éxito', user: newUser });
-
-    } catch (errTx) {
-      console.error('[createUser] Error dentro de la transacción:', errTx);
-      await t.rollback();
-      console.log('[createUser] Transacción ROLLBACK');
-      return res.status(500).json({ message: 'Error al crear usuario (tx)', error: errTx?.message || errTx });
+      });
+    } else if (rol === 1) {
+      await Profesors.create({
+        nombre,
+        especialidad,
+        vigencia: typeof vigencia === 'boolean' ? vigencia : true,
+        sede,
+        num_identificacion
+      });
     }
 
+    return res.status(201).json({ message: 'Usuario creado con éxito', user: newUser });
+
   } catch (error) {
-    console.error('[createUser] Error general:', error);
-    console.timeEnd('createUser');
     return res.status(500).json({ message: 'Error al crear usuario', error: error?.message || error });
   }
 }
+
+
 
 
 
