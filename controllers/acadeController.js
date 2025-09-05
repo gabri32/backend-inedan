@@ -804,6 +804,35 @@ const actualizarEstudiantesAsignados = async (req, res) => {
     return res.status(500).json({ message: 'Error al actualizar los estudiantes asignados.' });
   }
 };
+const promoverEstudiantes = async (req, res) => {
+  const cursoId = req.params.id;
+  const { estudiantes } = req.body;
+
+  if (!Array.isArray(estudiantes) || estudiantes.length === 0) {
+    return res.status(400).json({ message: 'El cuerpo debe contener un array de estudiantes no vacío.' });
+  }
+
+  try {
+    console.log("Promoviendo estudiantes:", estudiantes);
+
+    // Genera los placeholders dinámicos: $1, $2, $3, etc.
+    const placeholders = estudiantes.map((_, index) => `$${index + 1}`).join(', ');
+
+    const query = `
+      UPDATE academico.estudiantes
+      SET grado = grado + 1
+      WHERE id IN (${placeholders})
+    `;
+
+    await pool.query(query, estudiantes);
+
+    return res.status(200).json({ message: 'Estudiantes promovidos correctamente.' });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: 'Error al promover a los estudiantes.' });
+  }
+};
+
 async function consultarEstudianteCursoAsignaturas(req, res) {
   try {
     const { identificacion } = req.query;
@@ -1246,5 +1275,6 @@ module.exports = {
   insertNotafromTaller,
   notasPorEstudiantes,
   getNotasVistaDocente,
-  reportePorTipoGrado
+  reportePorTipoGrado,
+  promoverEstudiantes
 };

@@ -12,22 +12,26 @@ const students = sequelize.define('Students', {
     allowNull: false
   },
   edad: {
-    type: DataTypes.NUMBER,
-    allowNull: false,
+    type: DataTypes.INTEGER,
+    allowNull: false
   },
   grado: {
-    type: DataTypes.STRING, 
+    type: DataTypes.STRING,
     allowNull: false
   },
   num_identificacion: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    unique:true
+    unique: true
+  },
+  id_sede: {
+    type: DataTypes.INTEGER,
+    allowNull: false
   }
 }, {
-  tableName: 'estudiantes', 
-  schema: 'academico', 
-  timestamps: false 
+  tableName: 'estudiantes',
+  schema: 'academico',
+  timestamps: false
 });
 
 module.exports = students;

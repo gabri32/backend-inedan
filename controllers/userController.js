@@ -10,7 +10,16 @@ const pool = require('../db');
 const Profesors = require('../models/profesors');
 const Admins = require('../models/admins');
 
+async function getAllUsers(req, res) {
 
+  try {
+    const usuarios = await User.findAll(); // Consulta todos los registros
+    return res.status(200).json(usuarios);
+  } catch (error) {
+    console.error('Error al obtener usuarios:', error);
+    return res.status(500).json({ message: 'Error al obtener usuarios', error: error.message });
+  }
+}
 
 async function createUser(req, res) {
   console.log('createUser', req.body);
@@ -22,56 +31,51 @@ async function createUser(req, res) {
   } = payload;
 
   try {
-    const rol = Number(rol_id);
-
-    // Validación base
     if (!nombre || !contrasena) {
-      return res.status(400).json({ message: 'Username y password son requeridos' });
+      return res.status(400).json({ message: 'Nombre y contraseña son requeridos.' });
     }
 
-    // Validación por rol
-    if (rol === 2) { // Estudiante
+    // Validación por tipo de rol
+    if (rol_id === 2) { // Estudiante
       if (edad == null || grado == null || grado === '') {
-        return res.status(400).json({ message: 'Para rol estudiante (2) se requieren edad y grado' });
+        return res.status(400).json({ message: 'Para rol estudiante se requieren edad y grado.' });
       }
-    } else if (rol === 1) { // Profesor
+    } else if (rol_id === 1) { // Profesor
       if (!especialidad || sede == null) {
-        return res.status(400).json({ message: 'Para rol profesor (1) se requieren especialidad y sede' });
+        return res.status(400).json({ message: 'Para rol profesor se requieren especialidad y sede.' });
       }
-    } else if (rol === 3) {
-      // Admin no requiere campos extra
-    } else {
-      return res.status(400).json({ message: `Rol no reconocido: ${rol}` });
+    } else if (rol_id !== 3) {
+      return res.status(400).json({ message: `Rol no reconocido: ${rol_id}` });
     }
 
-    // Hash de contraseña
     const hashedPassword = await bcrypt.hash(contrasena, 10);
 
-    // Crear usuario base
     const newUser = await User.create({
       nombre,
       correo,
       contraseña: hashedPassword,
-      rol_id: rol,
+      rol_id,
       num_identificacion
     });
 
-    // Insert específico por rol
-    if (rol === 3) {
+    if (rol_id === 3) {
       await Admins.create({
         nombre_completo: nombre,
         num_identificacion,
         correo
       });
-    } else if (rol === 2) {
-      await students.create({
+
+    } else if (rol_id === 2) {
+      const estudiante = await students.create({
         nombre,
         edad,
         grado,
         num_identificacion,
-       id_sede:sede
+        id_sede: sede
       });
-    } else if (rol === 1) {
+      console.log("Estudiante creado:", estudiante);
+
+    } else if (rol_id === 1) {
       await Profesors.create({
         nombre,
         especialidad,
@@ -84,9 +88,12 @@ async function createUser(req, res) {
     return res.status(201).json({ message: 'Usuario creado con éxito', user: newUser });
 
   } catch (error) {
+    console.error("Error en createUser:", error);
     return res.status(500).json({ message: 'Error al crear usuario', error: error?.message || error });
   }
 }
+
+
 
 
 
@@ -117,6 +124,47 @@ async function bulkCreateUser(req, res) {
     res.status(500).json({ message: 'Error al crear usuarios', error: error.message });
   }
 }
+const eliminarUsuario = async (req, res) => {
+  const id = req.params.id;
+  try {
+    const usuario = await User.findByPk(id);
+    if (!usuario) {
+      return res.status(404).json({ message: 'Usuario no encontrado.' });
+    }
+
+    await usuario.destroy();
+    return res.status(200).json({ message: 'Usuario eliminado correctamente.' });
+  } catch (error) {
+    console.error('Error al eliminar usuario:', error);
+    return res.status(500).json({ message: 'Error del servidor', error: error.message });
+  }
+};
+const actualizarUsuario = async (req, res) => {
+  const id = req.params.id;
+  const {
+    nombre, correo, rol_id, num_identificacion, contrasena
+  } = req.body;
+
+  try {
+    const usuario = await User.findByPk(id);
+    if (!usuario) {
+      return res.status(404).json({ message: 'Usuario no encontrado.' });
+    }
+
+    // Si incluye contraseña, la hasheamos
+    if (contrasena) {
+      const bcrypt = require('bcrypt');
+      req.body.contraseña = await bcrypt.hash(contrasena, 10);
+    }
+
+    await usuario.update(req.body);
+
+    return res.status(200).json({ message: 'Usuario actualizado correctamente.' });
+  } catch (error) {
+    console.error('Error al actualizar usuario:', error);
+    return res.status(500).json({ message: 'Error del servidor', error: error.message });
+  }
+};
 
 async function getUsers(req, res) {
   try {
@@ -293,4 +341,5 @@ async function roles(req, res) {
     return res.status(500).json({ error: "Error en el servidor" });
   }
 }   
-module.exports = { createUser, getUsers, login, gettypes, createproperty, getPropertiesC, getPropertiesD, updatePropierties,deletePropierties,bulkCreateUser,roles };
+module.exports = { createUser, eliminarUsuario,actualizarUsuario,
+  getAllUsers,getUsers, login, gettypes, createproperty, getPropertiesC, getPropertiesD, updatePropierties,deletePropierties,bulkCreateUser,roles };
