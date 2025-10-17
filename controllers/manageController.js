@@ -25,26 +25,45 @@ async function getsliderImages(req, res) {
 }
 async function updatesliderImages(req, res) {
   try {
-    const { numero } = req.body; // Asegúrate de pasar el id en la URL o en el body
+    const { numero } = req.body;
+
     if (!req.file) {
       return res.status(400).json({ message: "No se subió ningún archivo" });
     }
 
-    const sliderImages = await slider.findOne({ where: { id:numero } });
+    // Si se envía un número, intentamos actualizar
+    if (numero) {
+      const sliderImage = await slider.findOne({ where: { id: numero } });
 
-    if (!sliderImages) {
-      return res.status(404).json({ message: "Imagen no encontrada" });
+      if (!sliderImage) {
+        return res.status(404).json({ message: "Imagen no encontrada para el ID proporcionado" });
+      }
+
+      sliderImage.imagen = req.file.buffer;
+      await sliderImage.save();
+
+      return res.json({ message: "Imagen actualizada correctamente" });
     }
 
-    sliderImages.imagen = req.file.buffer;
-    await sliderImages.save();
+    // Si no se envía número, creamos un nuevo registro
+    const nuevaImagen = await slider.create({
+      imagen: req.file.buffer
+    });
 
-    res.json({ message: "Imagen actualizada correctamente" });
+    return res.status(201).json({
+      message: "Imagen creada correctamente",
+      id: nuevaImagen.id
+    });
+
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Error al actualizar imagen", error });
+    return res.status(500).json({
+      message: "Error al actualizar o crear la imagen",
+      error: error.message || error
+    });
   }
 }
+
 async function deleteSliderImage(req, res) {
  try {
   console.log(req.body);
