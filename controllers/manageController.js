@@ -45,5 +45,19 @@ async function updatesliderImages(req, res) {
     res.status(500).json({ message: "Error al actualizar imagen", error });
   }
 }
+async function deleteSliderImage(req, res) {
+ try {
+  console.log(req.body);
+  const { id } = req.body;
+  const image = await slider.findByPk(id);
+  if (!image) {
+    return res.status(404).json({ message: "Imagen no encontrada" });
+  }
+  await image.destroy();
+  res.json({ message: "Imagen eliminada correctamente" });
+ } catch (error) {
+  res.status(500).json({ message: "Error al eliminar imagen", error });
+  console.log(error);
+ }}
 
-module.exports = { getsliderImages,updatesliderImages };
+module.exports = { getsliderImages,updatesliderImages,deleteSliderImage };
