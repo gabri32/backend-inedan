@@ -31,8 +31,8 @@ async function updatesliderImages(req, res) {
       return res.status(400).json({ message: "No se subió ningún archivo" });
     }
 
-    // Si se envía un número, intentamos actualizar
-    if (numero) {
+    // Si numero es distinto de 'N/A', actualizamos
+    if (numero && numero !== 'N/A') {
       const sliderImage = await slider.findOne({ where: { id: numero } });
 
       if (!sliderImage) {
@@ -45,7 +45,7 @@ async function updatesliderImages(req, res) {
       return res.json({ message: "Imagen actualizada correctamente" });
     }
 
-    // Si no se envía número, creamos un nuevo registro
+    // Si numero es 'N/A', creamos una nueva imagen
     const nuevaImagen = await slider.create({
       imagen: req.file.buffer
     });
@@ -63,6 +63,7 @@ async function updatesliderImages(req, res) {
     });
   }
 }
+
 
 async function deleteSliderImage(req, res) {
  try {
