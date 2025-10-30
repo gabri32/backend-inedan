@@ -53,6 +53,7 @@ app.use('/api', incripcionRoutes);
 
 // ❗ Esto es lo correcto
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/public', express.static(path.join(__dirname, 'public')));
 const Curso = require('./models/Curso');
 const Asignatura = require('./models/Asignatura');
 const Taller = require('./models/talleres');

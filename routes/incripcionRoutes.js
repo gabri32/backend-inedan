@@ -5,7 +5,10 @@ const { getInscritos } = require('../controllers/acadeController');
 const upload = require('../config/multer.js');
 
 const extraerRuta = (archivo) => {
-  return archivo?.path?.replace(/^.*uploads[\\/]/, 'uploads/').replace(/\\/g, '/');
+  if (!archivo?.path) return null;
+  // Extraer solo el nombre del archivo y crear la ruta pública
+  const filename = archivo.filename || archivo.path.split(/[\\/]/).pop();
+  return `public/registros/archivos/${filename}`;
 };
 
 
@@ -93,4 +96,102 @@ router.post(
 );
 
 router.get('/getInscritos', getInscritos);
+
+// Método para obtener registros públicos
+router.get('/registros/publicos', async (req, res) => {
+  try {
+    const query = `
+      SELECT 
+        id,
+        nombre_estudiante,
+        grado,
+        sub_grado,
+        fecha_nacimiento,
+        nombre_acudiente,
+        contacto1,
+        estado,
+        fotografia,
+        carnet_vacunas,
+        registro_civil,
+        eps,
+        boletines,
+        doc_acudiente,
+        created_at
+      FROM academico.inscripciones 
+      WHERE estado = 'A'
+      ORDER BY created_at DESC
+      LIMIT 50
+    `;
+
+    const result = await pool.query(query);
+
+    const registros = result.rows.map(registro => ({
+      id: registro.id,
+      titulo: `Inscripción - ${registro.nombre_estudiante}`,
+      descripcion: `Grado: ${registro.grado}${registro.sub_grado ? ` - ${registro.sub_grado}` : ''}, Acudiente: ${registro.nombre_acudiente}`,
+      fecha: registro.created_at,
+      archivos: {
+        fotografia: registro.fotografia,
+        carnet_vacunas: registro.carnet_vacunas,
+        registro_civil: registro.registro_civil,
+        eps: registro.eps,
+        boletines: registro.boletines ? JSON.parse(registro.boletines) : [],
+        documento_acudiente: registro.doc_acudiente
+      }
+    }));
+
+    res.json(registros);
+  } catch (error) {
+    console.error('Error al obtener registros públicos:', error);
+    res.status(500).json({ error: 'Error al obtener los registros' });
+  }
+});
+
+// Método para obtener un registro específico
+router.get('/registro/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const query = `
+      SELECT * FROM academico.inscripciones 
+      WHERE id = $1 AND estado = 'A'
+    `;
+
+    const result = await pool.query(query, [id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Registro no encontrado' });
+    }
+
+    const registro = result.rows[0];
+    res.json({
+      ...registro,
+      boletines: registro.boletines ? JSON.parse(registro.boletines) : []
+    });
+  } catch (error) {
+    console.error('Error al obtener registro:', error);
+    res.status(500).json({ error: 'Error al obtener el registro' });
+  }
+});
+
+// Endpoint de prueba para verificar que los archivos se guardan correctamente
+router.get('/test/archivos', (req, res) => {
+  const fs = require('fs');
+  const path = require('path');
+
+  try {
+    const archivosDir = path.resolve('public/registros/archivos');
+    const archivos = fs.existsSync(archivosDir) ? fs.readdirSync(archivosDir) : [];
+
+    res.json({
+      mensaje: 'Sistema funcionando correctamente',
+      carpeta_existe: fs.existsSync(archivosDir),
+      ruta_completa: archivosDir,
+      archivos_guardados: archivos.length,
+      archivos: archivos
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;
