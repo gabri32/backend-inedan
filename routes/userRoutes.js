@@ -17,7 +17,7 @@ const { creationStudent, createProfesor,
     estudiantesPorgrado, gettotalcursos, actualizarEstudiantesAsignados, promoverEstudiantes, consultarEstudianteCursoAsignaturas
     , obtenerTalleresPorAsignatura, getdetailTaller, TallerPendiente, getTallerPendiente, updateTaller, getRespuestasPorTaller
     , insertNotafromTaller, notasPorEstudiantes, getNotasVistaDocente, reportePorTipoGrado } = require('../controllers/acadeController')
-const { getsliderImages, updatesliderImages, deleteSliderImage } = require('../controllers/manageController')
+const { getsliderImages, updatesliderImages, deleteSliderImage,getLandingImages } = require('../controllers/manageController')
 // Configurar multer para almacenar la imagen en memoria (BLOB)
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
@@ -72,4 +72,5 @@ router.get('/notas/:id/:num_identificacion', notasPorEstudiantes);
 router.post('/vista-notas-docente', getNotasVistaDocente);
 router.get('/reportes/tipo-grado', reportePorTipoGrado);
 router.post("/deleteSliderImage", deleteSliderImage);
+router.get('/getLandingImages', getLandingImages);
 module.exports = router;

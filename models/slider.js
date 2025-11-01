@@ -11,6 +11,10 @@ const slider = sequelize.define('slider', {
     type: DataTypes.BLOB("long"), // Guardar imagen como BLOB largo
     allowNull: true
   },
+  tipo: {
+    type: DataTypes.STRING,
+    allowNull: true
+  }
  
 }, {
   tableName: 'slider', 

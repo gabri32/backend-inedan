@@ -3,21 +3,37 @@ const typebelongings = require('../models/typebelongings');
 const belongings = require('../models/belongings');
 const students = require('../models/students');
 const slider = require('../models/slider');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const { where } = require('sequelize');
 require('dotenv').config();
 
 async function getsliderImages(req, res) {
   try {
-    const sliderImages = await slider.findAll();
+    const sliderImages = await slider.findAll({
+      where: {tipo:'S'},
+    });
     const sliderImagesmap = sliderImages.map(photo => {
       return {
         ...photo.toJSON(),
         foto: photo.imagen ? `data:image/jpeg;base64,${photo.imagen.toString('base64')}` : null
       };
     });
-
+    console.log(sliderImagesmap);
+    res.status(200).json(sliderImagesmap);
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener imagenes', error });
+  }
+}
+async function getLandingImages(req, res) {
+  try {
+    const sliderImages = await slider.findAll({
+      where: {tipo:'A'},
+    });
+    const sliderImagesmap = sliderImages.map(photo => {
+      return {
+        ...photo.toJSON(),
+        foto: photo.imagen ? `data:image/jpeg;base64,${photo.imagen.toString('base64')}` : null
+      };
+    });
+    console.log(sliderImagesmap);
     res.status(200).json(sliderImagesmap);
   } catch (error) {
     res.status(500).json({ message: 'Error al obtener imagenes', error });
@@ -30,7 +46,7 @@ async function updatesliderImages(req, res) {
     if (!req.file) {
       return res.status(400).json({ message: "No se subió ningún archivo" });
     }
-
+console.log(req.file);
     // Si numero es distinto de 'N/A', actualizamos
     if (numero && numero !== 'N/A') {
       const sliderImage = await slider.findOne({ where: { id: numero } });
@@ -64,7 +80,6 @@ async function updatesliderImages(req, res) {
   }
 }
 
-
 async function deleteSliderImage(req, res) {
  try {
   console.log(req.body);
@@ -73,11 +88,12 @@ async function deleteSliderImage(req, res) {
   if (!image) {
     return res.status(404).json({ message: "Imagen no encontrada" });
   }
-  await image.destroy();
+   image.imagen = null;
+    await image.save();
   res.json({ message: "Imagen eliminada correctamente" });
  } catch (error) {
   res.status(500).json({ message: "Error al eliminar imagen", error });
   console.log(error);
  }}
 
-module.exports = { getsliderImages,updatesliderImages,deleteSliderImage };
+module.exports = { getsliderImages,updatesliderImages,deleteSliderImage,getLandingImages };
