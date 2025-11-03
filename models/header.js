@@ -9,7 +9,12 @@ const header=sequelize.define('header', {
     },
     descripcion: DataTypes.TEXT,
     url: DataTypes.TEXT,
-    image: DataTypes.BLOB, // o BLOB("long") para más de 64KB
+    image: DataTypes.BLOB, 
+     enable: {
+    type: DataTypes.BOOLEAN,
+    allowNull: true,
+    defaultValue: true
+  }
   }, {
     tableName: 'header',
     schema: 'landing',

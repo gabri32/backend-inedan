@@ -6,7 +6,7 @@ const eventos = require('../models/eventos'); // Asegúrate de que este modelo e
 const getLandingSectionsHeader = async (req, res) => {
   try {
     const query = `
-      SELECT * FROM landing.header
+      SELECT * FROM landing.header order by id_header desc
     `;
     const result = await pool.query(query);
     const headers = result.rows.map(header => ({
@@ -22,7 +22,7 @@ const getLandingSectionsHeader = async (req, res) => {
 const getLandingEventos= async (req, res) => {
   try {
     const query = `
-      SELECT * FROM landing.eventos
+      SELECT * FROM landing.eventos order by id_evento desc
     `;
     const result = await pool.query(query);
     const headers = result.rows.map(header => ({
@@ -89,7 +89,8 @@ async function deteleHeaders(req, res) {
       return res.status(404).json({ message: "Encabezado no encontrado" });
     }
 
-    await headerToDelete.destroy();
+     headerToDelete.enable = !headerToDelete.enable;
+     await headerToDelete.save();
     res.status(200).json({ message: "Encabezado eliminado correctamente" });
   } catch (error) {
     console.error('Error al eliminar encabezado:', error);
@@ -104,8 +105,9 @@ async function deleteEventos(req, res) {
     if (!headerToDelete) {
       return res.status(404).json({ message: "Encabezado no encontrado" });
     }
-
-    await headerToDelete.destroy();
+   
+     headerToDelete.enable = !headerToDelete.enable;
+     await headerToDelete.save();
     res.status(200).json({ message: "Encabezado eliminado correctamente" });
   } catch (error) {
     console.error('Error al eliminar encabezado:', error);

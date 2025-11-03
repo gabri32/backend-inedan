@@ -10,6 +10,11 @@ const eventos=sequelize.define('eventos', {
     detalle: DataTypes.TEXT,
         titulo: DataTypes.TEXT,
     imagen: DataTypes.BLOB, 
+     enable: {
+    type: DataTypes.BOOLEAN,
+    allowNull: true,
+    defaultValue: true
+  }
   }, {
     tableName: 'eventos',
     schema: 'landing',
