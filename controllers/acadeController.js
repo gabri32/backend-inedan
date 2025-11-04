@@ -916,19 +916,28 @@ async function obtenerTalleresPorAsignatura(req, res) {
 };
 async function getInscritos(req, res) {
   try {
-    const { id } = req.params;
+    const resultado = await pool.query(`SELECT * FROM academico.inscripciones`);
+    const inscritos = resultado.rows.map(row => {
+      return {
+        ...row,
+        // Convertir cada BLOB a base64 si existe
+        fotografia_blob: row.fotografia_blob?.toString('base64') || null,
+        registro_civil_blob: row.registro_civil_blob?.toString('base64') || null,
+        eps_blob: row.eps_blob?.toString('base64') || null,
+        carnet_vacunas_blob: row.carnet_vacunas_blob?.toString('base64') || null,
+        doc_acudiente_blob: row.doc_acudiente_blob?.toString('base64') || null,
+        boletines_blob: row.boletines_blob // este ya viene como JSON string
+      };
+    });
 
-    const resultado = await pool.query(
-      `SELECT * FROM academico.inscripciones`
-    );
-    const inscritos = resultado.rows;
     res.status(200).json(inscritos);
 
   } catch (error) {
-    console.error(error)
-    throw error;
+    console.error('Error en getInscritos:', error);
+    res.status(500).json({ error: 'Error al obtener inscripciones' });
   }
 }
+
 
 async function getdetailTaller(req, res) {
   try {

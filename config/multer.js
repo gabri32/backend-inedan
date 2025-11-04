@@ -1,29 +1,33 @@
 const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
-const { v4: uuidv4 } = require('uuid');
 
-// Crear las carpetas si no existen
-const publicDir = path.resolve('public');
-const registrosDir = path.resolve('public/registros');
-const archivosDir = path.resolve('public/registros/archivos');
+// Configuración para almacenar archivos en memoria como BLOB
+const storage = multer.memoryStorage();
 
-[publicDir, registrosDir, archivosDir].forEach(dir => {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
+// Configuración de multer con límites para archivos
+const upload = multer({ 
+  storage: storage,
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB por archivo
+    files: 15 // máximo 15 archivos
+  },
+  fileFilter: (req, file, cb) => {
+    // Tipos de archivo permitidos
+    const allowedTypes = [
+      'image/jpeg',
+      'image/jpg', 
+      'image/png',
+      'image/gif',
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    ];
+    
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error(`Tipo de archivo no permitido: ${file.mimetype}`), false);
+    }
   }
 });
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, archivosDir);
-  },
-  filename: (req, file, cb) => {
-    // Genera un nombre único: <uuid>.<ext>
-    const ext = path.extname(file.originalname);
-    const filename = `${uuidv4()}${ext}`;
-    cb(null, filename);
-  },
-});
-
-module.exports = multer({ storage });
+module.exports = upload;

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registros Públicos - Sistema BLOB</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            background-color: #f5f5f5;
+        }
+        .registro { 
+            border: 1px solid #ddd; 
+            margin: 10px 0; 
+            padding: 15px; 
+            border-radius: 5px; 
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .fecha { 
+            color: #666; 
+            font-size: 0.9em; 
+            margin-top: 10px;
+        }
+        .archivos {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 3px;
+        }
+        .archivos a {
+            color: #007bff;
+            text-decoration: none;
+            margin-right: 10px;
+            display: inline-block;
+            margin-bottom: 5px;
+        }
+        .archivos a:hover {
+            text-decoration: underline;
+        }
+        .archivo-preview {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            background-color: white;
+        }
+        .archivo-preview img {
+            max-width: 200px;
+            max-height: 150px;
+            border-radius: 3px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .blob-indicator {
+            background: #28a745;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.8em;
+            margin-left: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>📊 Registros Públicos de Inscripciones <span class="blob-indicator">BLOB</span></h1>
+    <div id="registros-container">
+        <p>Cargando registros desde base de datos...</p>
+    </div>
+    
+    <script>
+        async function cargarRegistros() {
+            try {
+                const response = await fetch('/api/registros/publicos');
+                const registros = await response.json();
+                
+                const container = document.getElementById('registros-container');
+                if (registros.length === 0) {
+                    container.innerHTML = '<p>No hay registros disponibles.</p>';
+                    return;
+                }
+                
+                container.innerHTML = registros.map(registro => `
+                    <div class="registro">
+                        <h3>${registro.titulo}</h3>
+                        <p>${registro.descripcion}</p>
+                        <div class="archivos">
+                            <strong>📁 Archivos almacenados como BLOB:</strong><br><br>
+                            ${registro.archivos.fotografia ? `
+                                <div class="archivo-preview">
+                                    <strong>📷 Fotografía:</strong> 
+                                    <a href="/api/archivo/${registro.id}/fotografia" target="_blank">${registro.archivos.fotografia.nombre}</a>
+                                    ${registro.archivos.fotografia.tipo.startsWith('image/') ? 
+                                        `<br><img src="${registro.archivos.fotografia.data}" alt="Fotografía" title="Click para ver en tamaño completo">` : ''}
+                                </div>` : ''}
+                            ${registro.archivos.carnet_vacunas ? `
+                                <div class="archivo-preview">
+                                    <strong>💉 Carnet de Vacunas:</strong> 
+                                    <a href="/api/archivo/${registro.id}/carnet_vacunas" target="_blank">${registro.archivos.carnet_vacunas.nombre}</a>
+                                </div>` : ''}
+                            ${registro.archivos.registro_civil ? `
+                                <div class="archivo-preview">
+                                    <strong>📄 Registro Civil:</strong> 
+                                    <a href="/api/archivo/${registro.id}/registro_civil" target="_blank">${registro.archivos.registro_civil.nombre}</a>
+                                </div>` : ''}
+                            ${registro.archivos.eps ? `
+                                <div class="archivo-preview">
+                                    <strong>🏥 EPS:</strong> 
+                                    <a href="/api/archivo/${registro.id}/eps" target="_blank">${registro.archivos.eps.nombre}</a>
+                                </div>` : ''}
+                            ${registro.archivos.documento_acudiente ? `
+                                <div class="archivo-preview">
+                                    <strong>👤 Documento Acudiente:</strong> 
+                                    <a href="/api/archivo/${registro.id}/documento_acudiente" target="_blank">${registro.archivos.documento_acudiente.nombre}</a>
+                                </div>` : ''}
+                            ${registro.archivos.boletines && registro.archivos.boletines.length > 0 ? 
+                                `<div class="archivo-preview">
+                                    <strong>📊 Boletines (${registro.archivos.boletines.length}):</strong><br>
+                                    ${registro.archivos.boletines.map((boletin, index) => 
+                                        `<a href="data:${boletin.mimetype};base64,${boletin.buffer}" target="_blank" download="${boletin.originalname}">📋 ${boletin.originalname}</a>`
+                                    ).join('<br>')}
+                                </div>` : ''}
+                        </div>
+                        <div class="fecha">📅 Fecha: ${new Date(registro.fecha).toLocaleString()}</div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('registros-container').innerHTML = 
+                    '<p>❌ Error al cargar los registros. Verifique la conexión y que la base de datos tenga las columnas BLOB.</p>';
+            }
+        }
+        
+        cargarRegistros();
+        
+        // Recargar cada 30 segundos
+        setInterval(cargarRegistros, 30000);
+    </script>
+</body>
+</html>

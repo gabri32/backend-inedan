@@ -46,6 +46,49 @@ app.post('/api/upload', upload.single('image'), (req, res) => {
   res.json({ message: "Imagen subida correctamente", fileSize: req.file.size });
 });
 
+// Ruta de bienvenida con enlaces útiles
+app.get('/', (req, res) => {
+  res.send(`
+    <html>
+      <head><title>Backend INEDAN - Sistema BLOB</title></head>
+      <body style="font-family: Arial, sans-serif; margin: 40px;">
+        <h1>🎓 Backend INEDAN - Sistema de Inscripciones BLOB</h1>
+        <h2>📋 Enlaces de Prueba:</h2>
+        <ul>
+          <li><a href="/test-blob.html">🗄️ Prueba Sistema BLOB (Nuevo)</a></li>
+          <li><a href="/test-cors.html">🔧 Test de CORS</a></li>
+          <li><a href="/api/test/archivos">📁 Estado del Sistema</a></li>
+          <li><a href="/public/registros/">📊 Registros Públicos BLOB</a></li>
+          <li><a href="/api/registros/publicos">🔗 API - Registros JSON BLOB</a></li>
+        </ul>
+        <h2>📡 API Endpoints BLOB:</h2>
+        <ul>
+          <li><strong>POST</strong> /api/registro - Registrar inscripción (BLOB)</li>
+          <li><strong>GET</strong> /api/registros/publicos - Obtener registros con BLOB</li>
+          <li><strong>GET</strong> /api/archivo/:id/:tipo - Servir archivo BLOB individual</li>
+          <li><strong>POST</strong> /api/test/upload - Prueba de subida BLOB</li>
+        </ul>
+        <div style="background: #d1ecf1; padding: 15px; border-radius: 5px; margin: 20px 0;">
+          <strong>🗄️ Sistema BLOB Activo:</strong><br>
+          • Los archivos se guardan en la base de datos como BLOB<br>
+          • No se crean archivos físicos en el servidor<br>
+          • Límite: 10MB por archivo, máximo 15 archivos
+        </div>
+        <p><em>Servidor funcionando en puerto ${port}</em></p>
+      </body>
+    </html>
+  `);
+});
+
+// Rutas específicas para páginas de prueba
+app.get('/test-blob.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'test-blob.html'));
+});
+
+app.get('/test-cors.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'test-cors.html'));
+});
+
 app.use('/api/landing', landingRoutes);
 app.use('/api', userRoutes);
 app.use('/api', voteRoutes);
