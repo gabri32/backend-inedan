@@ -67,7 +67,7 @@ setInterval(() => {
   }).on("error", (err) => {
     console.error("Error en auto-ping:", err.message);
   });
-}, 7200); // 120,000 ms = 2 minutos
+}, 720000); // 120,000 ms = 2 minutos
 app.use('/api/landing', landingRoutes);
 app.use('/api', userRoutes);
 app.use('/api', voteRoutes);
